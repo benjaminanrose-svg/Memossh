@@ -334,6 +334,45 @@ El bloque `@media (prefers-reduced-motion: reduce)` apaga transiciones, parallax
 
 ---
 
+## 13. Carrusel de cafés (celular y tablet)
+
+Las tres tarjetas apiladas alargaban demasiado la página en pantallas chicas. Bajo **900 px** el mismo contenedor se convierte en un carrusel que se desliza con el dedo.
+
+**Sobre 900 px no cambia nada**: sigue siendo la grilla de tres columnas de siempre.
+
+### Medido antes y después, en 375 px
+
+| | Antes | Ahora |
+|---|---|---|
+| Alto de la sección de cafés | 2158 px | **969 px** (−55 %) |
+| Alto total de la página | 12231 px | **11043 px** |
+
+### Cómo funciona
+
+- El contenedor pasa a `grid-auto-flow: column` con tarjetas de `min(78%, 340px)` y `scroll-snap-type: x mandatory`, así cada deslizada engancha en una tarjeta.
+- Se sale del margen de la sección con `margin-inline` negativo para que **la tarjeta siguiente asome**: eso es lo que le dice al usuario que puede deslizar, sin poner un cartel.
+- La barra de scroll se oculta (`scrollbar-width: none` y el equivalente de WebKit).
+- **La tarjeta centrada se ve entera; las de al lado se achican a 0,93 y bajan a 0,55 de opacidad.** El JS escribe `--esc` y `--op` en cada cuadro de scroll según lo lejos que esté cada tarjeta del centro, y el CSS las aplica. Al no haber `transition`, el efecto sigue al dedo en tiempo real en vez de ir atrasado.
+- Debajo hay **puntos de posición**: el activo se estira a 28 px y se pinta del rojo de la marca. Se puede tocar cualquiera para ir a esa tarjeta.
+
+### Dónde está
+
+| Pieza | Selector |
+|---|---|
+| Contenedor | `.carrusel` (la clase se la pone el JS al contenedor que ya existía) |
+| Puntos | `.carrusel-puntos` y `.carrusel-punto.activo` |
+| Lógica | método `carruselCafes()`, llamado desde `componentDidMount()` |
+
+**No se tocó el HTML**: el método toma el padre de la primera `.producto`, le agrega la clase y crea los puntos. Si el JS fallara, las tarjetas se ven apiladas como antes, nunca rotas.
+
+Con movimiento reducido se apagan el achicado, el apagado y el scroll suave; el carrusel sigue funcionando al deslizar.
+
+### Verificado
+
+375 px y 820 px: el carrusel desliza, los puntos marcan la tarjeta correcta al deslizar y al tocarlos, y la tarjeta centrada se destaca. 1024 px: las tres tarjetas siguen en una fila, los puntos ocultos y sin achicado ni transparencia. Sin scroll horizontal en la página, 26 de 26 bloques con aparición al scroll y 0 imágenes rotas.
+
+---
+
 ## Historial
 
 - 2026-09-07 — Creado el mapa. No se modificó la página; solo se analizó.
@@ -347,3 +386,4 @@ El bloque `@media (prefers-reduced-motion: reduce)` apaga transiciones, parallax
 - 2026-09-07 — Hero: `min-height` pasó de `calc(100dvh - 108px)` a `calc(100dvh - var(--nav-alto, 71px))`, lo que elimina la franja blanca de 37 px que quedó al borrar la marquesina. Favicon: el isotipo SVG incrustado como `data:` más `<title>` y `<meta description>` en el `<helmet>`. Ver sección 11. Verificado en 1280x800 y 375x812: franja de 0 px, favicon carga como imagen válida y la pestaña muestra "MEMOSSH · Café de especialidad".
 - 2026-09-07 — Micro-interacciones: flotación stop-motion del isotipo, parallax del hero con cursor y scroll, elevación de tarjetas con la foto saltando, y rebote/pulso/hundido en los botones. Todo con `transform` y `opacity`. Se ampliaron las reglas de `prefers-reduced-motion` para apagar también transiciones y desplazamientos. Ver sección 12. Verificado: 10 reglas aceptadas por el navegador, elevación medida vía `:focus-within`, parallax midiendo las variables CSS, y sin errores nuevos en consola.
 - 2026-09-07 — Movimiento rehecho tras revisar la página completa en el navegador: se quitó el `steps()` que hacía ver el logo a tirones, se unificó todo con una sola curva, y se agregó aparición suave escalonada en TODAS las secciones (antes solo se movía la portada). Se corrigió un bug propio: `IntersectionObserver` se saltaba bloques al hacer scroll rápido y quedaban invisibles; ahora la revisión corre por cuadro, con red de seguridad a los 8 s. Además se ocultó la fila "Molemos para" (V60, Espresso, Moka…) que se me había pasado en la tarea de "solo café en grano", y la nota interna "reemplázalos por comentarios reales de tu Instagram" que estaba visible al público. Ver sección 12.
+- 2026-09-07 — Carrusel de cafés bajo 900 px: deslizable con enganche, tarjeta centrada destacada y puntos de posición. La sección pasó de 2158 px a 969 px de alto en 375 px. Sobre 900 px la grilla de tres columnas queda igual. Ver sección 13.
