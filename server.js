@@ -61,6 +61,22 @@ const server = http.createServer((req, res) => {
   res.end(cuerpo);
 });
 
+// Detrás del proxy de Railway las conexiones se reutilizan. Si Node las cierra
+// antes que el proxy, ese proxy devuelve 502 de forma intermitente.
+// Por eso se mantienen abiertas más tiempo que el proxy (que corta a ~60s).
+server.keepAliveTimeout = 65000;
+server.headersTimeout = 66000;
+server.requestTimeout = 0; // sin límite: bajar 19 MB puede tardar en redes lentas
+
+server.on('error', (err) => {
+  console.error('ERROR del servidor:', err.message);
+  process.exit(1);
+});
+
 server.listen(PORT, '0.0.0.0', () => {
+  const origen = process.env.PORT
+    ? `variable PORT que entregó el entorno (${process.env.PORT})`
+    : 'respaldo local 8080, porque el entorno NO entregó la variable PORT';
   console.log(`Escuchando en http://0.0.0.0:${PORT}`);
+  console.log(`Puerto tomado de: ${origen}`);
 });

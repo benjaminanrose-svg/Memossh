@@ -132,3 +132,4 @@ La paleta verde oliva (`--color-accent: #7a8a5e`, `--color-accent-2-900: #272e1b
 - 2026-09-07 — Creado el mapa. No se modificó la página; solo se analizó.
 - 2026-09-07 — Agregados `server.js` y `package.json` para publicar en Railway. Probado en local: responde 200 y la página se ve bien.
 - 2026-09-07 — `server.js`: el respaldo de puerto pasó de 3000 a 8080 y el log ahora dice `Escuchando en http://0.0.0.0:${PORT}`. Probado con y sin la variable PORT; ambos casos responden 200.
+- 2026-09-07 — Error 502 en Railway con el servidor arrancado OK. Endurecido `server.js`: `keepAliveTimeout` 65s y `headersTimeout` 66s (evita 502 intermitentes del proxy), `requestTimeout` 0 (la descarga de 19 MB no se corta), manejador de `server.on('error')`, y un log nuevo que dice si el puerto vino de la variable `PORT` o del respaldo 8080. Causa más probable del 502: el puerto destino del dominio en Railway no coincide con 8080.
