@@ -50,15 +50,15 @@ Para editar: `sed -i 's/texto viejo/texto nuevo/' ` sobre la línea 390, o el ed
 
 | # | Ancla | Título visible | Notas |
 |---|---|---|---|
-| 1 | — | Nav pegajoso (sticky) | Enlaces: `#cafes`, `#verde`, `#proceso`, `#mayorista`, `#contacto` |
+| 1 | — | Nav pegajoso (sticky) | Enlaces: `#cafes`, `#proceso`, `#mayorista`, `#contacto` (ver sección 8) |
 | 2 | `#top` | "Sonríe, tenemos café para empezar." | Hero con video de fondo (`heroReel`) |
-| 3 | — | 4 tarjetas | Tostado bajo pedido / Origen en la bolsa / También en verde / Envíos a todo Chile |
+| 3 | — | 4 tarjetas | Tostado bajo pedido / Origen en la bolsa / Envíos a todo Chile. La 3ª ("También en verde") está **oculta**, ver sección 9 |
 | 4 | — | "Nicaragua" | Bloque de origen destacado |
 | 5 | `#cafes` | "Tres orígenes, tres…" | Valle del Amazonas · El Salvador · Nicaragua (Matagalpa) |
-| 6 | `#verde` | "¿Tuestas en casa? Te vendemos el grano verde" | Fondo oscuro |
+| 6 | `#verde` | "¿Tuestas en casa? Te vendemos el grano verde" | Fondo oscuro. **OCULTA** desde 2026-09-07 (ver sección 9). |
 | 7 | `#proceso` | "Del productor a tu taza, sin atajos" | 3 pasos: Elegimos el lote / Tostamos bajo pedido / Enviamos fresco |
 | 8 | — | "Que nunca te falte café" | Suscripción |
-| 9 | — | "Lo que dicen los que ya lo probaron" | **Opcional**: se oculta con `mostrarTestimonios` |
+| 9 | — | "Lo que dicen los que ya lo probaron" | **Opcional**: se oculta con `mostrarTestimonios`. Quedan 1 de 3 testimonios visibles (ver sección 9) |
 | 10 | `#mayorista` | "Café para tu cafetería u oficina" | |
 | 11 | — | "El mimo que no se calla el café" | Fondo oscuro |
 | 12 | — | "El café, de cerca" | **Opcional**: galería, se oculta con `mostrarGaleria` |
@@ -150,6 +150,50 @@ Corte: **768 px**.
 
 ---
 
+## 9. Oferta reducida a café en grano de 250 gr
+
+Desde el 2026-09-07 la página ofrece **solo café en grano de 250 gr**. Se quitaron las menciones a café molido y café verde.
+
+### Textos cambiados
+
+| Dónde | Antes | Ahora |
+|---|---|---|
+| Catálogo | "Todo en 250 gr, en grano o molido a tu método…" | "Todo en formato de 250 gr en grano. La selección rota según cosecha." |
+| Ficha del producto | Formato: "250 gr" | Formato: "250 gr en grano" |
+| Contacto | "…en grano, molido, verde, suscripción o volumen…" | "…café en grano de 250 gr, suscripción o volumen para tu local." |
+| Suscripción | "Eliges origen, molienda y cada cuánto…" | "Eliges origen y cada cuánto lo quieres." |
+| Alt del hero | "Bolsa de café verde Memossh" | "Bolsa de café Memossh" |
+| Alt de galería | "Café verde en bolsa resellable" | "Café Memossh en bolsa resellable" |
+
+### Enlaces eliminados
+
+- "Café verde" de la barra superior (y con eso también del menú hamburguesa, porque comparten los mismos enlaces).
+- "Café verde" del pie de página.
+- "Guía de molienda" del pie de página.
+
+Menú actual: **Cafés · Proceso · Cafeterías** + botón de WhatsApp.
+
+### Vistas ocultas, NO borradas
+
+Se les puso la clase `oculto-temporal` (regla `display: none !important` en el `<style>` del `<helmet>`). El contenido sigue completo en el archivo.
+
+| Elemento | Cómo encontrarlo |
+|---|---|
+| Sección entera de café verde | `<section id="verde" class="oculto-temporal">` |
+| Tarjeta "También en verde" | 3ª tarjeta de la fila bajo el hero |
+| Testimonio de la molienda | tarjeta con "Me armaron la molienda para mi moka…" |
+| Testimonio del café verde | tarjeta con "Compro el verde por kilo…" |
+
+**Para volver a mostrar cualquiera**: quitar `oculto-temporal` de ese elemento. Para reactivar todo de golpe: borrar la regla `.oculto-temporal` del CSS.
+
+También se agregó `.card.elev-sm { max-width: 620px; }` porque al ocultar dos de los tres testimonios, el que quedaba se estiraba a los 1128 px del contenedor. Si se vuelven a mostrar los tres, esa regla no cambia nada.
+
+### Lo que NO existe en esta página
+
+Al revisar no hay `<input>`, `<select>`, `<option>`, `<form>` ni `<dialog>`: **no hay selectores de molienda, badges, radio buttons, modales, carrito ni filtros de categoría**. Todo el pedido se hace por WhatsApp y el enlace es solo `https://wa.me/<número>`, sin mensaje ni datos precargados. Por eso no hubo "payload" que ajustar.
+
+---
+
 ## Historial
 
 - 2026-09-07 — Creado el mapa. No se modificó la página; solo se analizó.
@@ -158,3 +202,4 @@ Corte: **768 px**.
 - 2026-09-07 — Error 502 en Railway con el servidor arrancado OK. Endurecido `server.js`: `keepAliveTimeout` 65s y `headersTimeout` 66s (evita 502 intermitentes del proxy), `requestTimeout` 0 (la descarga de 19 MB no se corta), manejador de `server.on('error')`, y un log nuevo que dice si el puerto vino de la variable `PORT` o del respaldo 8080. Causa más probable del 502: el puerto destino del dominio en Railway no coincide con 8080.
 - 2026-09-07 — Eliminada la barra de anuncios superior (marquesina marrón con "Melipilla, Chile — Tostado bajo pedido — …"). Se borró el `<div>` con `background: var(--color-accent-700)` que iba justo antes del `<nav>`, más su regla `@keyframes mem-marquee` (ya no la usaba nadie). El `<nav class="nav">` quedó como primer hijo del contenedor y arranca en el borde superior (`top: 0`, sin margen ni relleno residual). Verificado en el navegador: 11 secciones, 6 anclas y 27 imágenes intactas; sticky sigue funcionando. Respaldo del archivo previo en el scratchpad de la sesión.
 - 2026-09-07 — Menú responsivo: hamburguesa en móvil (< 768 px) y barra horizontal en escritorio. Se agregaron `.nav-links`, `.nav-burger`, `.nav-fondo`, `.solo-escritorio`, el bloque `@media (max-width: 767px)` y el método `menuResponsivo()`. Ver sección 8. Probado en 375 px y 1280 px: sin desbordamiento horizontal, 4 formas de cierre funcionando, escritorio idéntico al anterior, 11 secciones y 27 imágenes intactas.
+- 2026-09-07 — Oferta reducida a café en grano de 250 gr: textos actualizados, enlaces "Café verde" y "Guía de molienda" eliminados de barra, menú móvil y pie, y 4 vistas ocultas con `oculto-temporal` (sección de café verde, tarjeta "También en verde" y 2 testimonios). No había selectores, modales, carrito ni filtros que ajustar. Ver sección 9. Verificado en 1280 px y 375 px: 0 palabras prohibidas visibles, sin desbordamiento, 27 imágenes intactas.
