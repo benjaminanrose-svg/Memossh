@@ -121,7 +121,8 @@ La paleta verde oliva (`--color-accent: #7a8a5e`, `--color-accent-2-900: #272e1b
 - Repo conectado: `github.com/benjaminanrose-svg/Memossh`, rama `main`. Railway redespliega solo con cada `git push`.
 - Arranque: `npm start` → `node server.js`. No hay `npm install` que hacer, porque no usa librerías externas.
 - El servidor lee el HTML una vez al arrancar, lo comprime en memoria (25 MB → 19 MB) y lo entrega en `/`. También responde `/health` con "ok" y usa ETag para que el navegador no vuelva a bajar los 26 MB en cada visita.
-- Puerto: usa `process.env.PORT`, que Railway asigna solo. **No fijar un puerto a mano.**
+- Puerto: `const PORT = process.env.PORT || 8080;` y `server.listen(PORT, "0.0.0.0", ...)`. Railway inyecta `PORT` y el servidor lo obedece; el 8080 es solo el respaldo para cuando se corre en el computador. **No fijar un puerto a mano ni sobreescribir `PORT`.**
+- No existe ningún `railway.json`, `nixpacks.toml`, `Procfile`, `Dockerfile` ni `.env` en el repo: nada más puede pisar el puerto.
 - La URL pública se genera en Railway: **Settings → Networking → Generate Domain**.
 
 ---
@@ -130,3 +131,4 @@ La paleta verde oliva (`--color-accent: #7a8a5e`, `--color-accent-2-900: #272e1b
 
 - 2026-09-07 — Creado el mapa. No se modificó la página; solo se analizó.
 - 2026-09-07 — Agregados `server.js` y `package.json` para publicar en Railway. Probado en local: responde 200 y la página se ve bien.
+- 2026-09-07 — `server.js`: el respaldo de puerto pasó de 3000 a 8080 y el log ahora dice `Escuchando en http://0.0.0.0:${PORT}`. Probado con y sin la variable PORT; ambos casos responden 200.

@@ -7,7 +7,7 @@ const zlib = require('zlib');
 const path = require('path');
 const crypto = require('crypto');
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080; // Railway inyecta PORT; 8080 es solo el respaldo local
 const PAGINA = path.join(__dirname, 'Memossh Coffee - pagina completa.html');
 
 // Se lee y se comprime una sola vez al arrancar; queda en memoria.
@@ -62,5 +62,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Escuchando en el puerto ${PORT}`);
+  console.log(`Escuchando en http://0.0.0.0:${PORT}`);
 });
