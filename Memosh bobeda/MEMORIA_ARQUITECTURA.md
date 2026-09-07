@@ -51,7 +51,7 @@ Para editar: `sed -i 's/texto viejo/texto nuevo/' ` sobre la línea 390, o el ed
 | # | Ancla | Título visible | Notas |
 |---|---|---|---|
 | 1 | — | Nav pegajoso (sticky) | Enlaces: `#cafes`, `#proceso`, `#mayorista`, `#contacto` (ver sección 8) |
-| 2 | `#top` | "Sonríe, tenemos café para empezar." | Hero con video de fondo (`heroReel`) |
+| 2 | `#top` | "Sonríe, tenemos café para empezar." | Hero con video de fondo (`heroReel`). Altura fluida con `--nav-alto`, ver sección 11 |
 | 3 | — | 4 tarjetas | Tostado bajo pedido / Origen en la bolsa / Envíos a todo Chile. La 3ª ("También en verde") está **oculta**, ver sección 9 |
 | 4 | — | "Nicaragua" | Bloque de origen destacado |
 | 5 | `#cafes` | "Tres orígenes, tres…" | Valle del Amazonas · El Salvador · Nicaragua (Matagalpa) |
@@ -261,6 +261,40 @@ Se codifica con `encodeURIComponent` y se abre `https://wa.me/56930053008?text=�
 
 ---
 
+## 11. Altura del hero y favicon
+
+### La franja blanca del hero
+
+El hero tenía `min-height: calc(100dvh - 108px)`. Ese 108 era la suma de la barra de anuncios (37 px) más el menú (71 px). Al borrar la marquesina el 2026-09-07, el menú pasó a medir 71 px, así que el hero quedaba **37 px corto** y por debajo asomaba el fondo crema del sitio: esa era la franja blanca.
+
+Ahora es:
+
+```css
+min-height: calc(100dvh - var(--nav-alto, 71px))
+```
+
+`--nav-alto` es la variable que el método `menuResponsivo()` ya calculaba midiendo el menú de verdad (ver sección 8), y se recalcula al cambiar el tamaño de la ventana. Si el JavaScript no llegara a correr, el respaldo de 71 px deja el hero igual de bien. **No hay número mágico que actualizar si algún día cambia la altura del menú.**
+
+Medido: franja de 0 px y hueco de 0 px entre el hero y la sección siguiente, tanto en 1280x800 como en 375x812.
+
+### Favicon y título de la pestaña
+
+Antes la pestaña salía **sin título y sin icono**. Se agregaron dentro del `<helmet>` de la plantilla:
+
+| Etiqueta | Valor |
+|---|---|
+| `<title>` | MEMOSSH · Café de especialidad |
+| `<link rel="icon" type="image/svg+xml">` | el isotipo, incrustado como `data:` |
+| `<meta name="description">` | resumen para buscadores y para cuando se comparte el enlace |
+
+**De dónde sale el icono**: es el mismo SVG del logo del menú (`ecce8c91-24a0-4264-855b-d7e0af2b6488`). Estaba comprimido con gzip dentro del manifest y traía 8 KB de metadata de procedencia (C2PA) que no sirve para un icono. Se descomprimió, se le quitó solo ese bloque `<metadata>` y quedó el dibujo intacto: 93 formas, `viewBox 0 0 2000 2000`, 53 KB en base64.
+
+Se incrustó como `data:` en vez de apuntar al recurso del bundle porque las direcciones de los recursos empaquetados se generan de nuevo en cada carga (`blob:`), y un favicon apuntando ahí no es confiable.
+
+Para regenerarlo si cambia el logo: `scratchpad/limpiar-svg.js` hace la descompresión y limpieza.
+
+---
+
 ## Historial
 
 - 2026-09-07 — Creado el mapa. No se modificó la página; solo se analizó.
@@ -271,3 +305,4 @@ Se codifica con `encodeURIComponent` y se abre `https://wa.me/56930053008?text=�
 - 2026-09-07 — Menú responsivo: hamburguesa en móvil (< 768 px) y barra horizontal en escritorio. Se agregaron `.nav-links`, `.nav-burger`, `.nav-fondo`, `.solo-escritorio`, el bloque `@media (max-width: 767px)` y el método `menuResponsivo()`. Ver sección 8. Probado en 375 px y 1280 px: sin desbordamiento horizontal, 4 formas de cierre funcionando, escritorio idéntico al anterior, 11 secciones y 27 imágenes intactas.
 - 2026-09-07 — Oferta reducida a café en grano de 250 gr: textos actualizados, enlaces "Café verde" y "Guía de molienda" eliminados de barra, menú móvil y pie, y 4 vistas ocultas con `oculto-temporal` (sección de café verde, tarjeta "También en verde" y 2 testimonios). No había selectores, modales, carrito ni filtros que ajustar. Ver sección 9. Verificado en 1280 px y 375 px: 0 palabras prohibidas visibles, sin desbordamiento, 27 imágenes intactas.
 - 2026-09-07 — Carrito de compras completo: controles en las 3 tarjetas, botón con contador en la barra, drawer lateral con estado vacío, persistencia en `localStorage` y mensaje consolidado de WhatsApp. Se configuró el número +56930053008. Ver sección 10. Probado en 1280 px y 375 px: agregar, sumar, restar, eliminar, vaciar bajo 1, persistir tras recargar, mensaje con el formato exacto y limpieza tras enviar.
+- 2026-09-07 — Hero: `min-height` pasó de `calc(100dvh - 108px)` a `calc(100dvh - var(--nav-alto, 71px))`, lo que elimina la franja blanca de 37 px que quedó al borrar la marquesina. Favicon: el isotipo SVG incrustado como `data:` más `<title>` y `<meta description>` en el `<helmet>`. Ver sección 11. Verificado en 1280x800 y 375x812: franja de 0 px, favicon carga como imagen válida y la pestaña muestra "MEMOSSH · Café de especialidad".
