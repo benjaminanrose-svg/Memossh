@@ -13,6 +13,8 @@ Mapa de direcciones del proyecto **Memossh Coffee**. Se consulta ANTES de buscar
 | Ruta | Qué es | Tamaño |
 |---|---|---|
 | `Memossh Coffee - pagina completa.html` | La página web completa, empaquetada en un solo archivo (HTML + imágenes + video + JS, todo embebido) | ~26 MB / 392 líneas |
+| `server.js` | Servidor mínimo de Node (sin dependencias) que publica la página. Es lo que ejecuta Railway | — |
+| `package.json` | Le dice a Railway que arranque con `npm start` → `node server.js` | — |
 | `Memosh bobeda/` | Bóveda de Obsidian (esta) | — |
 | `Memosh bobeda/MEMORIA_ARQUITECTURA.md` | Este mapa | — |
 | `Memosh bobeda/Bienvenido.md` | Nota por defecto de Obsidian, se puede borrar | — |
@@ -114,6 +116,17 @@ La paleta verde oliva (`--color-accent: #7a8a5e`, `--color-accent-2-900: #272e1b
 
 ---
 
+## 7. Despliegue (Railway)
+
+- Repo conectado: `github.com/benjaminanrose-svg/Memossh`, rama `main`. Railway redespliega solo con cada `git push`.
+- Arranque: `npm start` → `node server.js`. No hay `npm install` que hacer, porque no usa librerías externas.
+- El servidor lee el HTML una vez al arrancar, lo comprime en memoria (25 MB → 19 MB) y lo entrega en `/`. También responde `/health` con "ok" y usa ETag para que el navegador no vuelva a bajar los 26 MB en cada visita.
+- Puerto: usa `process.env.PORT`, que Railway asigna solo. **No fijar un puerto a mano.**
+- La URL pública se genera en Railway: **Settings → Networking → Generate Domain**.
+
+---
+
 ## Historial
 
 - 2026-09-07 — Creado el mapa. No se modificó la página; solo se analizó.
+- 2026-09-07 — Agregados `server.js` y `package.json` para publicar en Railway. Probado en local: responde 200 y la página se ve bien.
