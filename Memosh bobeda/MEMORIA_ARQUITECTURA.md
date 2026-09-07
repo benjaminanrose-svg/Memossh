@@ -127,6 +127,29 @@ La paleta verde oliva (`--color-accent: #7a8a5e`, `--color-accent-2-900: #272e1b
 
 ---
 
+## 8. Menú de navegación responsivo
+
+Corte: **768 px**.
+
+- **Escritorio (>= 768px)**: igual que siempre. `.nav-links { display: contents; }` hace que el contenedor sea "invisible" para el diseño, así los 4 enlaces siguen siendo hijos directos del flex del `nav` y no cambia nada visualmente.
+- **Móvil (< 768px)**: los enlaces se ocultan y `.nav-links` se convierte en un panel fijo bajo la barra (fondo crema, ancho completo, enlaces en columna de ~59 px de alto). En la barra quedan solo el logo, el botón de WhatsApp compacto (el texto "Pedir por " se oculta con `.solo-escritorio`) y el botón hamburguesa de 44x44.
+
+**Dónde está cada cosa** (todo en la línea 390):
+
+| Pieza | Selector / nombre |
+|---|---|
+| Contenedor de los 4 enlaces | `.nav-links` (id `menu-movil`) |
+| Botón hamburguesa | `.nav-burger`, con `.icono-menu` y `.icono-cerrar` |
+| Fondo oscuro para cerrar | `.nav-fondo` (hermano del `nav`) |
+| Estilos | bloque `@media (max-width: 767px)` al final del `<style>` del `<helmet>` |
+| Lógica | método `menuResponsivo()` en `class Component extends DCLogic`, llamado desde `componentDidMount()` |
+
+**Cómo funciona el estado**: abierto/cerrado se guarda como la clase `menu-abierto` en el elemento `<html>`, no en un nodo del componente. Se hizo así a propósito: React nunca toca `<html>`, entonces un re-render no puede borrar el estado. La altura real de la barra se mide en JavaScript y se guarda en la variable CSS `--nav-alto`, que el panel usa para colocarse justo debajo sin solaparse.
+
+**Se cierra de 4 formas**: al tocar un enlace, al tocar el fondo oscuro, al tocar cualquier parte fuera del menú, y con la tecla Escape. Además se cierra solo si la ventana pasa a 768 px o más.
+
+---
+
 ## Historial
 
 - 2026-09-07 — Creado el mapa. No se modificó la página; solo se analizó.
@@ -134,3 +157,4 @@ La paleta verde oliva (`--color-accent: #7a8a5e`, `--color-accent-2-900: #272e1b
 - 2026-09-07 — `server.js`: el respaldo de puerto pasó de 3000 a 8080 y el log ahora dice `Escuchando en http://0.0.0.0:${PORT}`. Probado con y sin la variable PORT; ambos casos responden 200.
 - 2026-09-07 — Error 502 en Railway con el servidor arrancado OK. Endurecido `server.js`: `keepAliveTimeout` 65s y `headersTimeout` 66s (evita 502 intermitentes del proxy), `requestTimeout` 0 (la descarga de 19 MB no se corta), manejador de `server.on('error')`, y un log nuevo que dice si el puerto vino de la variable `PORT` o del respaldo 8080. Causa más probable del 502: el puerto destino del dominio en Railway no coincide con 8080.
 - 2026-09-07 — Eliminada la barra de anuncios superior (marquesina marrón con "Melipilla, Chile — Tostado bajo pedido — …"). Se borró el `<div>` con `background: var(--color-accent-700)` que iba justo antes del `<nav>`, más su regla `@keyframes mem-marquee` (ya no la usaba nadie). El `<nav class="nav">` quedó como primer hijo del contenedor y arranca en el borde superior (`top: 0`, sin margen ni relleno residual). Verificado en el navegador: 11 secciones, 6 anclas y 27 imágenes intactas; sticky sigue funcionando. Respaldo del archivo previo en el scratchpad de la sesión.
+- 2026-09-07 — Menú responsivo: hamburguesa en móvil (< 768 px) y barra horizontal en escritorio. Se agregaron `.nav-links`, `.nav-burger`, `.nav-fondo`, `.solo-escritorio`, el bloque `@media (max-width: 767px)` y el método `menuResponsivo()`. Ver sección 8. Probado en 375 px y 1280 px: sin desbordamiento horizontal, 4 formas de cierre funcionando, escritorio idéntico al anterior, 11 secciones y 27 imágenes intactas.
