@@ -403,7 +403,11 @@ Desde el 2026-09-07 el panel rojo dejó de ser un bloque de contacto genérico y
 
 - Rótulo **Novedades**, título **Síguenos en Instagram** y un texto sobre los lotes nuevos y cuándo tuestan.
 - Botón principal **Seguir en Instagram** (relleno crema); **Pedir por WhatsApp** queda de secundario.
-- Todo en **una sola columna centrada** (clase `ig-seccion`), con la ventana grande debajo.
+- **Sobre 960 px: dos columnas.** El mensaje a la izquierda (alineado a la izquierda) y el feed a la derecha, en 540 px fijos. Así el panel queda lleno y equilibrado.
+- **Bajo 960 px: una columna centrada**, con el feed debajo.
+- El feed va **montado sobre el crema** con 10 px de margen y esquinas redondeadas, no pegado al borde de la tarjeta.
+
+  Primero se probó en una sola columna centrada también en escritorio y **no funcionó**: quedaba una tarjeta blanca chica flotando en medio de un campo rojo enorme, con mucho vacío alrededor. Se veía pegada encima, no diseñada. Las dos columnas resuelven eso.
 - Se conservan el horario y el botón de WhatsApp: siguen siendo el punto de contacto del sitio.
 
 ### El ancho del feed: 540 px es el máximo real
@@ -458,3 +462,4 @@ Alto: 430 px en escritorio, 390 px bajo 560 px de ancho.
 - 2026-09-07 — Carrusel de cafés bajo 900 px: deslizable con enganche, tarjeta centrada destacada y puntos de posición. La sección pasó de 2158 px a 969 px de alto en 375 px. Sobre 900 px la grilla de tres columnas queda igual. Ver sección 13.
 - 2026-09-07 — Ventana de Instagram: se apagó la galería (con el interruptor `mostrarGaleria` que ya existía) y el monito decorativo del panel rojo se reemplazó por el feed real de @memossh_coffee vía `instagram.com/<perfil>/embed`. Comprobado que Instagram permite incrustar esa dirección. Entra con esqueleto de carga y fundido para que no se vea pegada encima. Ver sección 14.
 - 2026-09-07 — La sección de contacto pasó a ser la invitación a seguir en Instagram (rótulo, título, texto de novedades y el botón de Instagram como principal), en una sola columna centrada. La ventana creció de 380 a 540 px, que es el máximo real del feed: más ancho deja vacío. El alto se calcula solo para las 6 publicaciones. Los videos no pueden reproducirse solos: son contenido de otro sitio dentro de un iframe.
+- 2026-09-07 — La sección de Instagram pasó a dos columnas sobre 960 px (mensaje a la izquierda, feed de 540 px a la derecha) porque centrada dejaba la tarjeta flotando en medio del panel rojo y se veía pegada encima. El feed además quedó montado sobre el crema con margen y esquinas redondeadas. Bajo 960 px sigue apilado y centrado.
