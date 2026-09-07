@@ -61,7 +61,7 @@ Para editar: `sed -i 's/texto viejo/texto nuevo/' ` sobre la línea 390, o el ed
 | 9 | — | "Lo que dicen los que ya lo probaron" | **Opcional**: se oculta con `mostrarTestimonios`. Quedan 1 de 3 testimonios visibles (ver sección 9) |
 | 10 | `#mayorista` | "Café para tu cafetería u oficina" | |
 | 11 | — | "El mimo que no se calla el café" | Fondo oscuro |
-| 12 | — | "El café, de cerca" | **Opcional**: galería, se oculta con `mostrarGaleria` |
+| 12 | — | "El café, de cerca" | **APAGADA** desde 2026-09-07: `mostrarGaleria` en false, ver sección 14 |
 | 13 | `#contacto` | "Sonríe, hay café." | |
 | 14 | — | Footer | Columnas: Comprar / Conocer / Escríbenos |
 
@@ -373,6 +373,75 @@ Con movimiento reducido se apagan el achicado, el apagado y el scroll suave; el 
 
 ---
 
+## 14. Ventana de Instagram
+
+La galería de fotos se apagó y en su lugar el panel rojo de contacto muestra el **Instagram real** de la marca.
+
+### Qué se hizo
+
+| Antes | Ahora |
+|---|---|
+| Sección "Galería — El café, de cerca" con 5 fotos | Apagada (sus fotos ya están en Instagram) |
+| Monito decorativo en el panel rojo | Ventana con el feed real de `@memossh_coffee` |
+
+La galería **no se borró**: se apagó con el interruptor `mostrarGaleria` que ya existía. Para traerla de vuelta se cambia `?? false` por `?? true` en `renderVals()`, o se activa la opción en el panel del editor.
+
+### Cómo funciona la ventana
+
+Usa `https://www.instagram.com/memossh_coffee/embed` dentro de un `<iframe>`. **Se comprobó en el navegador que Instagram sí permite incrustar esa dirección desde otro sitio** (la web normal de Instagram no lo permite; el `/embed` sí). Muestra el nombre, la foto, los seguidores y las últimas publicaciones reales, y se actualiza solo.
+
+### Por qué no se ve "pegado encima"
+
+- Va dentro de un marco con el mismo `border-radius`, la misma sombra y la misma tipografía del sitio.
+- Arriba tiene una barra propia con el ícono, `@memossh_coffee` y un enlace "Ver perfil", escrita con las fuentes y colores de la marca.
+- **Mientras carga se ve un bloque tranquilo con un brillo que lo cruza**, y cuando el contenido llega, el feed entra subiendo 12 px con un fundido de 620 ms. Así no aparece un rectángulo blanco de golpe.
+- Verificado en el navegador: a los 250 ms el esqueleto está visible y el feed en opacidad 0; después queda al revés.
+
+### La sección: invitación a seguir en Instagram
+
+Desde el 2026-09-07 el panel rojo dejó de ser un bloque de contacto genérico y pasa a ser la invitación a seguir la cuenta:
+
+- Rótulo **Novedades**, título **Síguenos en Instagram** y un texto sobre los lotes nuevos y cuándo tuestan.
+- Botón principal **Seguir en Instagram** (relleno crema); **Pedir por WhatsApp** queda de secundario.
+- Todo en **una sola columna centrada** (clase `ig-seccion`), con la ventana grande debajo.
+- Se conservan el horario y el botón de WhatsApp: siguen siendo el punto de contacto del sitio.
+
+### El ancho del feed: 540 px es el máximo real
+
+**Probado en el navegador**: el `/embed` de Instagram crece hasta **540 px** y ahí muestra 3 columnas de fotos grandes. Más ancho que eso **no se estira**: deja un vacío blanco al lado. Por eso la ventana tiene `max-width: 540px` y no más.
+
+El feed muestra siempre **6 publicaciones** (2 filas de 3), así que el alto se calcula solo:
+
+    height: calc(148px + min(540px, 100vw - 108px) * 0.667);
+
+148 px de cabecera del feed, más dos tercios del ancho (las dos filas de fotos). El `100vw - 108px` es el ancho disponible en celular: la pantalla menos los márgenes de la sección y del panel. Así no sobra blanco ni se corta la última fila en ningún tamaño de pantalla.
+
+### Los videos NO se reproducen solos
+
+El feed va dentro de un `iframe` de instagram.com. Por seguridad, **el navegador no deja que esta página toque nada de lo que hay adentro**: no se puede pedir que los videos partan, ni silenciarlos, ni cambiarles el tamaño. Instagram muestra la miniatura con el ícono de play y el video parte al tocarlo. Es una limitación de Instagram, no del sitio.
+
+Si algún día se quisiera video reproduciéndose solo en esa sección, habría que subir los archivos a la página (como el video del hero) y dejarían de ser el Instagram real: serían copias que hay que actualizar a mano.
+
+### Dónde está
+
+| Pieza | Selector |
+|---|---|
+| Marco completo | `.ig-ventana` (recibe la clase `listo` al cargar) |
+| Barra superior | `.ig-barra`, `.ig-usuario`, `.ig-ver` |
+| El iframe | `.ig-feed` |
+| Bloque de carga | `.ig-esqueleto` con la animación `ig-brillo` |
+| Lógica | método `ventanaInstagram()`, llamado desde `componentDidMount()` |
+
+Alto: 430 px en escritorio, 390 px bajo 560 px de ancho.
+
+### Cosas a tener presentes
+
+- **La ventana carga contenido de Instagram (Meta)**: eso trae sus cookies y su seguimiento a la página. Es lo normal en cualquier sitio que muestre su feed, pero conviene saberlo.
+- Si Instagram cambiara o bloqueara el `/embed`, la ventana quedaría vacía. En ese caso se apaga borrando el bloque y volviendo a encender la galería.
+- Se conservaron el título "Sonríe, hay café.", el texto, los botones de WhatsApp e Instagram y el horario: son el principal punto de contacto del sitio.
+
+---
+
 ## Historial
 
 - 2026-09-07 — Creado el mapa. No se modificó la página; solo se analizó.
@@ -387,3 +456,5 @@ Con movimiento reducido se apagan el achicado, el apagado y el scroll suave; el 
 - 2026-09-07 — Micro-interacciones: flotación stop-motion del isotipo, parallax del hero con cursor y scroll, elevación de tarjetas con la foto saltando, y rebote/pulso/hundido en los botones. Todo con `transform` y `opacity`. Se ampliaron las reglas de `prefers-reduced-motion` para apagar también transiciones y desplazamientos. Ver sección 12. Verificado: 10 reglas aceptadas por el navegador, elevación medida vía `:focus-within`, parallax midiendo las variables CSS, y sin errores nuevos en consola.
 - 2026-09-07 — Movimiento rehecho tras revisar la página completa en el navegador: se quitó el `steps()` que hacía ver el logo a tirones, se unificó todo con una sola curva, y se agregó aparición suave escalonada en TODAS las secciones (antes solo se movía la portada). Se corrigió un bug propio: `IntersectionObserver` se saltaba bloques al hacer scroll rápido y quedaban invisibles; ahora la revisión corre por cuadro, con red de seguridad a los 8 s. Además se ocultó la fila "Molemos para" (V60, Espresso, Moka…) que se me había pasado en la tarea de "solo café en grano", y la nota interna "reemplázalos por comentarios reales de tu Instagram" que estaba visible al público. Ver sección 12.
 - 2026-09-07 — Carrusel de cafés bajo 900 px: deslizable con enganche, tarjeta centrada destacada y puntos de posición. La sección pasó de 2158 px a 969 px de alto en 375 px. Sobre 900 px la grilla de tres columnas queda igual. Ver sección 13.
+- 2026-09-07 — Ventana de Instagram: se apagó la galería (con el interruptor `mostrarGaleria` que ya existía) y el monito decorativo del panel rojo se reemplazó por el feed real de @memossh_coffee vía `instagram.com/<perfil>/embed`. Comprobado que Instagram permite incrustar esa dirección. Entra con esqueleto de carga y fundido para que no se vea pegada encima. Ver sección 14.
+- 2026-09-07 — La sección de contacto pasó a ser la invitación a seguir en Instagram (rótulo, título, texto de novedades y el botón de Instagram como principal), en una sola columna centrada. La ventana creció de 380 a 540 px, que es el máximo real del feed: más ancho deja vacío. El alto se calcula solo para las 6 publicaciones. Los videos no pueden reproducirse solos: son contenido de otro sitio dentro de un iframe.
