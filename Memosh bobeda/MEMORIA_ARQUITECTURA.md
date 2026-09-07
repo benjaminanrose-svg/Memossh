@@ -194,6 +194,73 @@ Al revisar no hay `<input>`, `<select>`, `<option>`, `<form>` ni `<dialog>`: **n
 
 ---
 
+## 10. Carrito de compras
+
+Carrito completo con persistencia, drawer lateral y pedido consolidado por WhatsApp. Todo vive en la línea 390.
+
+### Productos y precios
+
+Los precios **no están en una base de datos ni en una variable**: viven en los atributos `data-` de cada botón "Agregar al carrito". Para cambiar un precio se edita ahí y listo.
+
+| Producto | `data-id` | Precio |
+|---|---|---|
+| Valle del Amazonas | `valle` | $12.000 |
+| El Salvador | `salvador` | $12.000 |
+| Nicaragua, Matagalpa | `matagalpa` | $8.000 |
+
+El precio también se muestra en la tarjeta (`.cc-precio`), así que **si cambias el `data-precio` hay que cambiar el texto visible del mismo bloque.**
+
+### Piezas
+
+| Pieza | Selector |
+|---|---|
+| Precio en la tarjeta | `.cc-precio` |
+| Cantidad + botón agregar | `.cc-tarjeta`, con `.cc-stepper`, `.cc-menos`, `.cc-cant`, `.cc-mas`, `.cc-agregar` |
+| Botón del carrito en la barra | `.cc-abrir`, con el contador `.cc-badge` |
+| Fondo oscuro | `.cc-fondo` |
+| Panel lateral | `.cc-drawer` (título `.cc-titulo`, cerrar `.cc-cerrar`) |
+| Lista de ítems | `.cc-items`, cada fila `.cc-item` (`.cc-mini`, `.cc-nombre`, `.cc-formato`, `.cc-sub`, `.cc-borrar`) |
+| Estado vacío | `.cc-vacio` con el botón `.cc-explorar` |
+| Pie con total | `.cc-pie`, `.cc-total`, `.cc-enviar` |
+| Lógica | método `carritoCompras()` en `class Component extends DCLogic`, llamado desde `componentDidMount()` |
+
+### Cómo funciona el estado
+
+- Se guarda en `localStorage`, llave **`memossh-carrito-v1`**, y solo se guarda `[{id, cant}]`.
+- **El nombre, el precio y la foto NO se guardan**: se leen de las tarjetas de la página cada vez. Así un cambio de precio manda siempre, y la miniatura funciona tras recargar (las direcciones de las imágenes del bundle cambian en cada carga, guardarlas la rompería).
+- Al abrir la página se descartan los ítems cuyo `id` ya no existe en el catálogo.
+- Todas las lecturas y escrituras van dentro de `try/catch`: si el navegador bloquea el almacenamiento, el carrito igual funciona (solo no recuerda).
+- Si la cantidad baja de 1, el ítem se elimina.
+- Al enviar el pedido, el carrito se vacía y el panel se cierra.
+
+### Mensaje de WhatsApp
+
+Número configurado: **+56 9 3005 3008** (el 930053008 con el código de Chile). Está en tres lugares: la lógica del carrito, el `waLink` que usan los botones "Pedir por WhatsApp" y el valor por defecto del panel del editor.
+
+Formato generado (verificado en el navegador):
+
+```
+¡Hola MEMOSSH! ☕ Quisiera realizar el siguiente pedido:
+
+• Valle del Amazonas (250g grano) x 2 — $24.000
+• Nicaragua, Matagalpa (250g grano) x 1 — $8.000
+
+----------------------------------
+Total del Pedido: $32.000
+
+¿Tienen disponibilidad y cuáles son los pasos para concretar la compra?
+```
+
+Se codifica con `encodeURIComponent` y se abre `https://wa.me/56930053008?text=…`.
+
+### Trampas encontradas (para no repetirlas)
+
+1. **`String.replace` con texto se come los `$`.** `$'` y `$&` son comodines. Al insertar código con `$` hay que pasar una **función** como reemplazo: `t.replace(buscar, () => nuevo)`. Esto rompió la clase entera la primera vez.
+2. **El atributo `hidden` no basta.** Cualquier regla CSS con clase que ponga `display` le gana al `display:none` que el navegador aplica a `[hidden]`. Por eso existe la regla `[hidden] { display: none !important; }`.
+3. **En móvil no caben cuatro cosas en la barra.** Logo + WhatsApp + carrito + menú daban 396 px en 375. Se ocultó el botón de WhatsApp de la barra solo en móvil (`.nav .btn-primary { display: none; }` dentro del `@media`).
+
+---
+
 ## Historial
 
 - 2026-09-07 — Creado el mapa. No se modificó la página; solo se analizó.
@@ -203,3 +270,4 @@ Al revisar no hay `<input>`, `<select>`, `<option>`, `<form>` ni `<dialog>`: **n
 - 2026-09-07 — Eliminada la barra de anuncios superior (marquesina marrón con "Melipilla, Chile — Tostado bajo pedido — …"). Se borró el `<div>` con `background: var(--color-accent-700)` que iba justo antes del `<nav>`, más su regla `@keyframes mem-marquee` (ya no la usaba nadie). El `<nav class="nav">` quedó como primer hijo del contenedor y arranca en el borde superior (`top: 0`, sin margen ni relleno residual). Verificado en el navegador: 11 secciones, 6 anclas y 27 imágenes intactas; sticky sigue funcionando. Respaldo del archivo previo en el scratchpad de la sesión.
 - 2026-09-07 — Menú responsivo: hamburguesa en móvil (< 768 px) y barra horizontal en escritorio. Se agregaron `.nav-links`, `.nav-burger`, `.nav-fondo`, `.solo-escritorio`, el bloque `@media (max-width: 767px)` y el método `menuResponsivo()`. Ver sección 8. Probado en 375 px y 1280 px: sin desbordamiento horizontal, 4 formas de cierre funcionando, escritorio idéntico al anterior, 11 secciones y 27 imágenes intactas.
 - 2026-09-07 — Oferta reducida a café en grano de 250 gr: textos actualizados, enlaces "Café verde" y "Guía de molienda" eliminados de barra, menú móvil y pie, y 4 vistas ocultas con `oculto-temporal` (sección de café verde, tarjeta "También en verde" y 2 testimonios). No había selectores, modales, carrito ni filtros que ajustar. Ver sección 9. Verificado en 1280 px y 375 px: 0 palabras prohibidas visibles, sin desbordamiento, 27 imágenes intactas.
+- 2026-09-07 — Carrito de compras completo: controles en las 3 tarjetas, botón con contador en la barra, drawer lateral con estado vacío, persistencia en `localStorage` y mensaje consolidado de WhatsApp. Se configuró el número +56930053008. Ver sección 10. Probado en 1280 px y 375 px: agregar, sumar, restar, eliminar, vaciar bajo 1, persistir tras recargar, mensaje con el formato exacto y limpieza tras enviar.

@@ -4,26 +4,6 @@
     "type": "split",
     "children": [
       {
-        "id": "559fc940db6d49c0",
-        "type": "tabs",
-        "children": [
-          {
-            "id": "6662ee8e58e83fe3",
-            "type": "leaf",
-            "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Bienvenido.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "Bienvenido"
-            }
-          }
-        ]
-      },
-      {
         "id": "67dd251497531b0d",
         "type": "tabs",
         "children": [
@@ -31,10 +11,14 @@
             "id": "f7bec428ea66431a",
             "type": "leaf",
             "state": {
-              "type": "graph",
-              "state": {},
-              "icon": "lucide-git-fork",
-              "title": "Vista gráfica"
+              "type": "markdown",
+              "state": {
+                "file": "cree un enlace.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "cree un enlace"
             }
           }
         ]
@@ -115,7 +99,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Bienvenido.md",
+                "file": "cree un enlace.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -134,7 +118,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "Bienvenido.md",
+                "file": "cree un enlace.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
@@ -177,7 +161,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Bienvenido.md",
+                "file": "cree un enlace.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
@@ -204,8 +188,11 @@
       "bases:Crear nueva base": false
     }
   },
-  "active": "6662ee8e58e83fe3",
+  "active": "f7bec428ea66431a",
   "lastOpenFiles": [
+    "cree un enlace.md",
+    "MEMORIA_ARQUITECTURA.md",
+    "Bienvenido.md",
     "sedsZUA87",
     "sedcQDU4o",
     "sedapdkvk",
@@ -216,9 +203,6 @@
     "sed8K38rM",
     "sedykNglb",
     "tmp.md",
-    "sedvnG4dL",
-    "sedn2zXzr",
-    "MEMORIA_ARQUITECTURA.md",
-    "Bienvenido.md"
+    "sedvnG4dL"
   ]
 }
