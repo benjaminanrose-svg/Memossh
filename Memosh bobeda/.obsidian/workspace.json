@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "cree un enlace.md",
+                "file": "MEMORIA_ARQUITECTURA.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "cree un enlace"
+              "title": "MEMORIA_ARQUITECTURA"
             }
           }
         ]
@@ -190,6 +190,7 @@
   },
   "active": "f7bec428ea66431a",
   "lastOpenFiles": [
+    "tmp.md",
     "cree un enlace.md",
     "MEMORIA_ARQUITECTURA.md",
     "Bienvenido.md",
@@ -202,7 +203,6 @@
     "sedA0xB9G",
     "sed8K38rM",
     "sedykNglb",
-    "tmp.md",
     "sedvnG4dL"
   ]
 }

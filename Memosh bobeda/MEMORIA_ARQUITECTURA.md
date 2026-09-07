@@ -295,6 +295,46 @@ Para regenerarlo si cambia el logo: `scratchpad/limpiar-svg.js` hace la descompr
 
 ---
 
+## 12. Micro-interacciones y animaciones
+
+Todas usan **solo `transform` y `opacity`**, las dos propiedades que el navegador resuelve en la tarjeta gráfica sin recalcular el diseño de la página. No se anima ancho, alto, posición ni color de fondo.
+
+### Qué se mueve
+
+| Dónde | Qué hace | Cómo |
+|---|---|---|
+| Isotipo del hero (`.hero-logo`) | Flota subiendo y bajando 12 px con una leve inclinación, **a saltos** como stop-motion | `@keyframes mem-flota` con `steps(9, end)` |
+| Mosaico de fotos del hero (`.hero-fondo`) | Parallax: se desplaza con el cursor y con el scroll | `transform` calculado con las variables `--mx`, `--my`, `--sy` |
+| Contenido del hero (`.hero-contenido`) | Parallax suave en sentido contrario | igual, con factores más chicos |
+| Tarjetas de producto (`.producto`) | Se elevan 9 px con sombra más profunda al pasar el cursor **o al enfocar con el teclado** | `transition` + `:hover, :focus-within` |
+| Foto de la bolsa (`.producto-foto`) | Crece 7 % y se inclina 1,8° **a saltos** | `transition: transform 320ms steps(4, end)` |
+| Botones (`.btn`) | Rebote al pasar el cursor; los primarios además laten | `mem-pulso` + curva elástica |
+| Botones (`.btn:active`) | Se hunden al hacer clic | `transform: scale(0.95)` |
+| `+` y `−` del carrito | Se hunden al tocarlos | `transform: scale(0.88)` |
+
+### El parallax
+
+El JavaScript **no mueve nada**: el método `microInteracciones()` solo escribe tres números en variables CSS del hero (`--mx`, `--my`, `--sy`) y el CSS hace todo el movimiento con `transform`. Detalles que importan:
+
+- Las escrituras se agrupan con `requestAnimationFrame`, así se escribe una vez por cuadro como máximo, no una por cada movimiento del ratón.
+- Los eventos van con `{ passive: true }`, para no frenar el scroll.
+- El desplazamiento por scroll se corta a los 900 px: más abajo el hero ya no se ve.
+- Si la persona pidió menos movimiento, el JS ni siquiera calcula.
+
+### Movimiento reducido
+
+Ya existía `@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }`, que apaga las animaciones pero **no las transiciones ni los desplazamientos**. Se agregaron 5 reglas más en ese mismo bloque que apagan `transition` y ponen `transform: none` en el hero, las tarjetas, las fotos y los botones. Total: 6 reglas dentro de ese `@media`.
+
+### Cómo se verificó
+
+- Las 10 reglas nuevas fueron **aceptadas por el navegador** (una regla con error de sintaxis se descarta sola, así que si están, son válidas).
+- La elevación de tarjeta se comprobó con `:focus-within`, que dispara exactamente las mismas declaraciones que `:hover`: la tarjeta sube a `-9px`, la sombra cambia y la foto pasa a `scale(1.069) rotate(-1.8deg)`; al quitar el foco vuelve al reposo y las otras tarjetas no se mueven.
+- El parallax se comprobó moviendo el puntero y haciendo scroll: `--mx`, `--my` y `--sy` cambian y el `transform` del mosaico se actualiza.
+
+**No se pudo verificar**: el `:hover` con ratón de verdad y el bloque de movimiento reducido, porque el panel del navegador de la sesión no entrega estados de hover ni permite cambiar la preferencia del sistema.
+
+---
+
 ## Historial
 
 - 2026-09-07 — Creado el mapa. No se modificó la página; solo se analizó.
@@ -306,3 +346,4 @@ Para regenerarlo si cambia el logo: `scratchpad/limpiar-svg.js` hace la descompr
 - 2026-09-07 — Oferta reducida a café en grano de 250 gr: textos actualizados, enlaces "Café verde" y "Guía de molienda" eliminados de barra, menú móvil y pie, y 4 vistas ocultas con `oculto-temporal` (sección de café verde, tarjeta "También en verde" y 2 testimonios). No había selectores, modales, carrito ni filtros que ajustar. Ver sección 9. Verificado en 1280 px y 375 px: 0 palabras prohibidas visibles, sin desbordamiento, 27 imágenes intactas.
 - 2026-09-07 — Carrito de compras completo: controles en las 3 tarjetas, botón con contador en la barra, drawer lateral con estado vacío, persistencia en `localStorage` y mensaje consolidado de WhatsApp. Se configuró el número +56930053008. Ver sección 10. Probado en 1280 px y 375 px: agregar, sumar, restar, eliminar, vaciar bajo 1, persistir tras recargar, mensaje con el formato exacto y limpieza tras enviar.
 - 2026-09-07 — Hero: `min-height` pasó de `calc(100dvh - 108px)` a `calc(100dvh - var(--nav-alto, 71px))`, lo que elimina la franja blanca de 37 px que quedó al borrar la marquesina. Favicon: el isotipo SVG incrustado como `data:` más `<title>` y `<meta description>` en el `<helmet>`. Ver sección 11. Verificado en 1280x800 y 375x812: franja de 0 px, favicon carga como imagen válida y la pestaña muestra "MEMOSSH · Café de especialidad".
+- 2026-09-07 — Micro-interacciones: flotación stop-motion del isotipo, parallax del hero con cursor y scroll, elevación de tarjetas con la foto saltando, y rebote/pulso/hundido en los botones. Todo con `transform` y `opacity`. Se ampliaron las reglas de `prefers-reduced-motion` para apagar también transiciones y desplazamientos. Ver sección 12. Verificado: 10 reglas aceptadas por el navegador, elevación medida vía `:focus-within`, parallax midiendo las variables CSS, y sin errores nuevos en consola.
