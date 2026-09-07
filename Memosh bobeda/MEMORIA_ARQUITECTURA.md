@@ -183,6 +183,7 @@ Se les puso la clase `oculto-temporal` (regla `display: none !important` en el `
 | Tarjeta "También en verde" | 3ª tarjeta de la fila bajo el hero |
 | Testimonio de la molienda | tarjeta con "Me armaron la molienda para mi moka…" |
 | Testimonio del café verde | tarjeta con "Compro el verde por kilo…" |
+| Fila "Molemos para" (V60, Espresso, Moka…) | al final de la sección de cafés. **Detectada el 2026-09-07**: no decía "molido" ni "molienda", por eso no salió en la búsqueda original |
 
 **Para volver a mostrar cualquiera**: quitar `oculto-temporal` de ese elemento. Para reactivar todo de golpe: borrar la regla `.oculto-temporal` del CSS.
 
@@ -295,43 +296,41 @@ Para regenerarlo si cambia el logo: `scratchpad/limpiar-svg.js` hace la descompr
 
 ---
 
-## 12. Micro-interacciones y animaciones
+## 12. Movimiento y micro-interacciones
 
-Todas usan **solo `transform` y `opacity`**, las dos propiedades que el navegador resuelve en la tarjeta gráfica sin recalcular el diseño de la página. No se anima ancho, alto, posición ni color de fondo.
+**Reescrito el 2026-09-07** tras la revisión visual: la primera versión usaba `steps()` buscando un efecto stop-motion y se veía a tirones, y no había nada de movimiento bajo la portada.
 
-### Qué se mueve
+Todo el movimiento usa **una sola curva**, `--ritmo: cubic-bezier(0.22, 1, 0.36, 1)`: acelera rápido y frena largo. Es lo que hace que se sienta suave en vez de mecánico. Solo se animan `transform` y `opacity`.
 
-| Dónde | Qué hace | Cómo |
-|---|---|---|
-| Isotipo del hero (`.hero-logo`) | Flota subiendo y bajando 12 px con una leve inclinación, **a saltos** como stop-motion | `@keyframes mem-flota` con `steps(9, end)` |
-| Mosaico de fotos del hero (`.hero-fondo`) | Parallax: se desplaza con el cursor y con el scroll | `transform` calculado con las variables `--mx`, `--my`, `--sy` |
-| Contenido del hero (`.hero-contenido`) | Parallax suave en sentido contrario | igual, con factores más chicos |
-| Tarjetas de producto (`.producto`) | Se elevan 9 px con sombra más profunda al pasar el cursor **o al enfocar con el teclado** | `transition` + `:hover, :focus-within` |
-| Foto de la bolsa (`.producto-foto`) | Crece 7 % y se inclina 1,8° **a saltos** | `transition: transform 320ms steps(4, end)` |
-| Botones (`.btn`) | Rebote al pasar el cursor; los primarios además laten | `mem-pulso` + curva elástica |
-| Botones (`.btn:active`) | Se hunden al hacer clic | `transform: scale(0.95)` |
-| `+` y `−` del carrito | Se hunden al tocarlos | `transform: scale(0.88)` |
+### Qué se mueve, de arriba a abajo
 
-### El parallax
+| Dónde | Qué hace |
+|---|---|
+| Isotipo del hero | Flota 11 px, ciclo de 6,5 s, **continuo** (antes `steps(9)`, de ahí el efecto de 5 fps) |
+| Mosaico y contenido del hero | Parallax con el cursor y con el scroll, en sentidos opuestos |
+| Barra superior | Gana una sombra suave apenas se baja (clase `bajando` en el `<html>`) |
+| Enlaces del menú (escritorio) | Subrayado que crece de izquierda a derecha |
+| **Cada bloque de cada sección** | Aparece subiendo 18 px y fundiéndose, escalonado de a 70 ms |
+| Tarjetas de producto | Suben 7 px con sombra; la foto hace un zoom de 900 ms a 1,055 |
+| Cualquier `figure.washed` | Zoom sereno a 1,04 al pasar el cursor |
+| Botones | Suben 2 px con sombra; al hacer clic se apoyan (`scale(0.985)`, 90 ms) |
+| Carrito, menú, cerrar | Se hunden al tocarlos |
+| Anclas del menú | `scroll-behavior: smooth` con `scroll-padding-top`, así el destino no queda tapado por la barra |
+| Teclado | `:focus-visible` con contorno propio |
 
-El JavaScript **no mueve nada**: el método `microInteracciones()` solo escribe tres números en variables CSS del hero (`--mx`, `--my`, `--sy`) y el CSS hace todo el movimiento con `transform`. Detalles que importan:
+### La aparición al scroll: cómo funciona y por qué NO usa IntersectionObserver
 
-- Las escrituras se agrupan con `requestAnimationFrame`, así se escribe una vez por cuadro como máximo, no una por cada movimiento del ratón.
-- Los eventos van con `{ passive: true }`, para no frenar el scroll.
-- El desplazamiento por scroll se corta a los 900 px: más abajo el hero ya no se ve.
-- Si la persona pidió menos movimiento, el JS ni siquiera calcula.
+El JS recorre cada `section` y `footer`, baja un nivel si la sección es un solo envoltorio, y marca a sus hijos con la clase `rv` (o `rv-fade` si el elemento ya tiene una animación propia, para no pisarle el `transform`). **Lo que ya se ve al cargar no se marca**, así no hay parpadeo inicial.
+
+La primera versión usaba `IntersectionObserver` y **se saltaba bloques cuando el scroll iba rápido**: quedaban invisibles para siempre. Se comprobó en la práctica: 6 bloques quedaron en blanco. Ahora la revisión corre **en cada cuadro de scroll** recorriendo la lista de pendientes, que se va vaciando sola. Es determinista: si un bloque entra en pantalla, se revela, sin importar la velocidad.
+
+Además hay una **red de seguridad a los 8 segundos** que revela cualquier pendiente. Y las clases las pone el JS, no el HTML: **si el JavaScript fallara, nada queda invisible.**
+
+Verificado con un barrido de un cuadro por paso en 1024 px y en 375 px: 25 de 25 bloques revelados, 0 invisibles.
 
 ### Movimiento reducido
 
-Ya existía `@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }`, que apaga las animaciones pero **no las transiciones ni los desplazamientos**. Se agregaron 5 reglas más en ese mismo bloque que apagan `transition` y ponen `transform: none` en el hero, las tarjetas, las fotos y los botones. Total: 6 reglas dentro de ese `@media`.
-
-### Cómo se verificó
-
-- Las 10 reglas nuevas fueron **aceptadas por el navegador** (una regla con error de sintaxis se descarta sola, así que si están, son válidas).
-- La elevación de tarjeta se comprobó con `:focus-within`, que dispara exactamente las mismas declaraciones que `:hover`: la tarjeta sube a `-9px`, la sombra cambia y la foto pasa a `scale(1.069) rotate(-1.8deg)`; al quitar el foco vuelve al reposo y las otras tarjetas no se mueven.
-- El parallax se comprobó moviendo el puntero y haciendo scroll: `--mx`, `--my` y `--sy` cambian y el `transform` del mosaico se actualiza.
-
-**No se pudo verificar**: el `:hover` con ratón de verdad y el bloque de movimiento reducido, porque el panel del navegador de la sesión no entrega estados de hover ni permite cambiar la preferencia del sistema.
+El bloque `@media (prefers-reduced-motion: reduce)` apaga transiciones, parallax, zooms y el scroll suave, y **fuerza `opacity: 1`** en los bloques marcados para que el contenido se vea igual.
 
 ---
 
@@ -347,3 +346,4 @@ Ya existía `@media (prefers-reduced-motion: reduce) { * { animation: none !impo
 - 2026-09-07 — Carrito de compras completo: controles en las 3 tarjetas, botón con contador en la barra, drawer lateral con estado vacío, persistencia en `localStorage` y mensaje consolidado de WhatsApp. Se configuró el número +56930053008. Ver sección 10. Probado en 1280 px y 375 px: agregar, sumar, restar, eliminar, vaciar bajo 1, persistir tras recargar, mensaje con el formato exacto y limpieza tras enviar.
 - 2026-09-07 — Hero: `min-height` pasó de `calc(100dvh - 108px)` a `calc(100dvh - var(--nav-alto, 71px))`, lo que elimina la franja blanca de 37 px que quedó al borrar la marquesina. Favicon: el isotipo SVG incrustado como `data:` más `<title>` y `<meta description>` en el `<helmet>`. Ver sección 11. Verificado en 1280x800 y 375x812: franja de 0 px, favicon carga como imagen válida y la pestaña muestra "MEMOSSH · Café de especialidad".
 - 2026-09-07 — Micro-interacciones: flotación stop-motion del isotipo, parallax del hero con cursor y scroll, elevación de tarjetas con la foto saltando, y rebote/pulso/hundido en los botones. Todo con `transform` y `opacity`. Se ampliaron las reglas de `prefers-reduced-motion` para apagar también transiciones y desplazamientos. Ver sección 12. Verificado: 10 reglas aceptadas por el navegador, elevación medida vía `:focus-within`, parallax midiendo las variables CSS, y sin errores nuevos en consola.
+- 2026-09-07 — Movimiento rehecho tras revisar la página completa en el navegador: se quitó el `steps()` que hacía ver el logo a tirones, se unificó todo con una sola curva, y se agregó aparición suave escalonada en TODAS las secciones (antes solo se movía la portada). Se corrigió un bug propio: `IntersectionObserver` se saltaba bloques al hacer scroll rápido y quedaban invisibles; ahora la revisión corre por cuadro, con red de seguridad a los 8 s. Además se ocultó la fila "Molemos para" (V60, Espresso, Moka…) que se me había pasado en la tarea de "solo café en grano", y la nota interna "reemplázalos por comentarios reales de tu Instagram" que estaba visible al público. Ver sección 12.
