@@ -446,6 +446,59 @@ Alto: 430 px en escritorio, 390 px bajo 560 px de ancho.
 
 ---
 
+## 15. Estampas de la marca
+
+Los 6 stickers de MEMOSSH aparecen pequeños en el cierre de algunas secciones.
+
+### De dónde salieron
+
+El original era **una lámina JPEG con los 6 stickers en una grilla de 2x3**, tinta negra sobre papel blanco. Node no sabe leer JPEG, así que el recorte se hizo **en el navegador**: un servidor de un solo uso (`scratchpad/servidor-stickers.js`) sirve la lámina y una página que la procesa con canvas y devuelve cada sticker ya listo.
+
+El proceso, por si hay que repetirlo:
+
+1. Se marca como tinta todo lo que tenga luminancia menor a 200.
+2. Con proyecciones por fila y por columna se detectan las bandas: 3 filas x 2 columnas = 6 cajas. **No se corta por división fija**, se detecta.
+3. Cada caja se cuadra (el sticker es un círculo) y se recorta.
+4. **El papel se quita usando la luminancia como transparencia**: `alfa = 255 - luminancia`. Así queda solo la tinta, con los bordes suaves en vez de dentados, y nada de fondo blanco. Todo el dibujo se pinta de negro plano.
+5. Se achica a 260x260 y se guarda como PNG.
+
+Resultado: 6 PNG de ~38 KB, 227 KB en total, incrustados en el CSS como `data:`. Comprobado: esquinas transparentes, 100 % de lo opaco es negro, 0 % blanco.
+
+### Dónde están
+
+Una por sección, alternando lado, en las 6 secciones **claras que tienen espacio libre abajo**:
+
+| Sección | Lado |
+|---|---|
+| Nicaragua, Valle de Matagalpa | derecha |
+| Los tres orígenes (`#cafes`) | izquierda |
+| Del productor a tu taza (`#proceso`) | derecha |
+| Que nunca te falte café (suscripción) | izquierda |
+| Lo que dicen los que ya lo probaron | derecha |
+| Café para tu cafetería (`#mayorista`) | izquierda |
+
+**No se pusieron** en la fila de 4 tarjetas (solo tenía **45 px libres abajo**, la estampa pisaba el texto de "Envíos a todo Chile"), ni en el hero, ni en los bloques oscuros, ni en el pie. Existe la clase `.estampa-clara` (con `invert(1)`) por si algún día se quiere poner una sobre fondo oscuro.
+
+### Cómo se comportan
+
+- **Escritorio y tablet**: en posición absoluta, en la esquina inferior, dentro del margen que ya tenía la sección. Tamaño `clamp(54px, 6vw, 88px)`, opacidad 0.85, con una inclinación leve (-6° a la derecha, +5° a la izquierda). Al pasar el cursor por la sección se enderezan un poco y suben a opacidad 1.
+- **Bajo 700 px**: pasan a `position: static`, **centradas al final de la sección**, de 46 px. En pantalla chica no queda ninguna esquina libre, así que ponerlas en el flujo es la única forma de garantizar que no pisen nada. Además funciona bien: quedan como un cierre de sección.
+
+Verificado midiendo cruces de rectángulos contra todo el texto e imágenes de cada sección: **0 choques en 1280 px y 0 en 375 px**.
+
+### Dónde está
+
+| Pieza | Selector |
+|---|---|
+| Estilo base | `.estampa`, más `.estampa-der` / `.estampa-izq` |
+| Las 6 imágenes | `.estampa-0` a `.estampa-5` (data URI en el CSS) |
+| Versión para fondo oscuro | `.estampa-clara` |
+| Colocación | método `estampas()`, llamado desde `componentDidMount()` |
+
+Las estampas **se agregan desde JavaScript**, no están en el HTML. Si eso fallara, la página queda exactamente como antes.
+
+---
+
 ## Historial
 
 - 2026-09-07 — Creado el mapa. No se modificó la página; solo se analizó.
@@ -463,3 +516,4 @@ Alto: 430 px en escritorio, 390 px bajo 560 px de ancho.
 - 2026-09-07 — Ventana de Instagram: se apagó la galería (con el interruptor `mostrarGaleria` que ya existía) y el monito decorativo del panel rojo se reemplazó por el feed real de @memossh_coffee vía `instagram.com/<perfil>/embed`. Comprobado que Instagram permite incrustar esa dirección. Entra con esqueleto de carga y fundido para que no se vea pegada encima. Ver sección 14.
 - 2026-09-07 — La sección de contacto pasó a ser la invitación a seguir en Instagram (rótulo, título, texto de novedades y el botón de Instagram como principal), en una sola columna centrada. La ventana creció de 380 a 540 px, que es el máximo real del feed: más ancho deja vacío. El alto se calcula solo para las 6 publicaciones. Los videos no pueden reproducirse solos: son contenido de otro sitio dentro de un iframe.
 - 2026-09-07 — La sección de Instagram pasó a dos columnas sobre 960 px (mensaje a la izquierda, feed de 540 px a la derecha) porque centrada dejaba la tarjeta flotando en medio del panel rojo y se veía pegada encima. El feed además quedó montado sobre el crema con margen y esquinas redondeadas. Bajo 960 px sigue apilado y centrado.
+- 2026-09-08 — Estampas de la marca: los 6 stickers se recortaron de una lámina JPEG usando el navegador (Node no lee JPEG), se les quitó el papel con la luminancia como transparencia, y se incrustaron como `data:` (227 KB). Van una por sección en 6 secciones claras, en la esquina inferior en escritorio y centradas al cierre en celular. 0 choques con el contenido en 1280 px y 375 px. Ver sección 15. Los PNG quedaron guardados en la bóveda por si hay que reusarlos.
