@@ -575,6 +575,71 @@ Estaba en 960 px y a 1000 px de ancho la columna de texto quedaba en **190 px**:
 
 ---
 
+## 18. Reseñas reales de Google Maps
+
+La sección "Lo que dicen los que ya lo probaron" puede mostrar **las reseñas de verdad de Google**, actualizadas solas. Está armado y probado; **falta solo configurar la clave y el lugar** en Railway.
+
+### Cómo funciona
+
+1. El servidor (`server.js`) expone **`/api/resenas`**. Le pregunta a Google por el negocio y devuelve las reseñas en JSON.
+2. La página pide esa dirección al cargar y **dibuja las tarjetas con el diseño del sitio**: estrellas, la frase, el nombre y cuándo la escribieron, más una línea arriba con la nota y un enlace a Google.
+3. Si no hay reseñas, si falta la configuración o si Google falla, **la página queda exactamente como estaba**. Nunca se rompe ni muestra un error al cliente.
+
+### La clave NUNCA va en la página
+
+`GOOGLE_API_KEY` y `GOOGLE_PLACE_ID` se leen con `process.env` **solo en el servidor**. La página únicamente pide `/api/resenas`, que no lleva ninguna clave. Si la clave estuviera en la página, cualquiera podría copiarla del código y gastar el saldo.
+
+Hay una comprobación automática en los scripts que **aborta si detecta una clave escrita en la página**. Ojo con un falso positivo: el texto `AIza` aparece por casualidad una vez dentro de los 26 MB de datos codificados de la línea 378. Por eso la comprobación mira **solo la línea 390**.
+
+### Los topes: por qué no puede llegar un cobro
+
+Hay tres frenos en el servidor, todos probados:
+
+| Freno | Qué hace | Se cambia con |
+|---|---|---|
+| **Guardado de 12 horas** | Da igual si entran 10 visitas o 10.000: a Google se le pregunta como mucho 2 veces al día | `GOOGLE_HORAS_CACHE` |
+| **Tope duro diario** | Aunque algo falle o alguien recargue mil veces, el servidor **no llama a Google más de 4 veces al día** | `GOOGLE_MAX_DIA` |
+| **Espera de 1 hora tras un error** | Si Google contesta con error, no se reintenta en cada visita | fijo en el código |
+
+**Probado, no supuesto:**
+
+- Con el tope en 3 y 10 visitas seguidas: se llamó a Google **3 veces**, y **las 10 visitas vieron las reseñas igual** (se sirven de la copia guardada).
+- Con Google fallando y 10 visitas: se llamó **1 sola vez**; las otras 9 recibieron "se reintenta más tarde" sin tocar a Google.
+
+**Sin configurar, no llama ni una vez**: cuesta cero mientras no se pongan las variables.
+
+> **Importante**: estos topes son del servidor. El freno definitivo lo pone Google: en Google Cloud hay que **limitar la cuota diaria de la clave** y **restringir la clave a la Places API**. Si la clave se filtrara, el contador del servidor no protegería nada; la cuota de Google sí.
+
+### El gasto
+
+- **Sin configurar, no llama a Google ni una vez**: cuesta cero.
+- Ya configurado, las respuestas **se guardan 12 horas**. O sea **2 consultas al día** en uso normal, y como mucho 4 por el tope, sin importar cuánta gente entre al sitio. Google da un crédito gratis mensual que cubre de sobra ese volumen.
+- Aun así conviene ponerle en Google Cloud un **tope diario de consultas** y una alerta de presupuesto, para que no pueda sorprender nunca.
+
+### Lo que hace falta para encenderlo
+
+1. Que Memossh tenga **ficha en Google Business** (si ya le dejan reseñas en Maps, la tiene).
+2. El **Place ID** del negocio (se saca del buscador de Place ID de Google).
+3. Una **clave de la Places API** creada en Google Cloud, restringida a esa API.
+4. En Railway → Variables: `GOOGLE_API_KEY` y `GOOGLE_PLACE_ID`.
+
+### Límite de Google que no se puede saltar
+
+**Google entrega como máximo 5 reseñas** y las elige él ("las más relevantes"). No se pueden traer todas ni escoger cuáles. Cualquier servicio que prometa más lo hace raspando la web de Google, contra sus condiciones, y se rompe seguido.
+
+### Dónde está
+
+| Pieza | Dónde |
+|---|---|
+| Consulta a Google y caché | función `traerResenas()` en `server.js` |
+| La dirección | `/api/resenas` en `server.js` |
+| Dibujo de las tarjetas | método `resenasGoogle()` en la página |
+| Estilos | `.resenas-nota`, `.resenas-estrella`, `.resenas-enlace`, `.resenas-estrellas`, `.resenas-cita`, `.resenas-pie` |
+
+Probado de punta a punta con datos de ejemplo: se dibujaron 3 tarjetas con estrellas, frase, autor y fecha, más la línea "★ 4,9 · 37 reseñas en Google · Ver todas en Google". Sin configuración, la página queda intacta.
+
+---
+
 ## Historial
 
 - 2026-09-07 — Creado el mapa. No se modificó la página; solo se analizó.
@@ -597,3 +662,6 @@ Estaba en 960 px y a 1000 px de ancho la columna de texto quedaba en **190 px**:
 - 2026-09-08 — Acabado: se separó el panel rojo del bloque oscuro (de 0 a 90 px, se veía una costura dura) y el corte de las dos columnas de Instagram subió de 960 a 1180 px, donde el texto dejaba de ser un hilo de 190 px. Ver sección 17.
 - 2026-09-09 — La sección del proceso se rehízo: fuera el desenfoque (ensuciaba) y en su lugar un grano que recorre una línea del paso 1 al 3 tostándose de verde a oscuro. Horizontal en computador, vertical en celular. El PNG de granos del usuario no estaba guardado en disco, así que el grano es un SVG con los colores de esa lámina. Ver sección 16.
 - 2026-09-09 — La pista de tueste pasó a cinco granos (uno por paso y uno entre medio) que se tuestan de verde a oscuro, y en computador el avance lo manda la posición del mouse en vez de ir automático. En celular sigue el scroll y los dos granos de en medio se ocultan para no caer sobre el texto. Ver sección 16.
+- 2026-09-09 — Reseñas de Google: el servidor expone `/api/resenas`, consulta a Google con la clave guardada en variables de entorno (nunca en la página) y guarda la respuesta 6 horas. La página las dibuja con su propio diseño; si no está configurado, queda igual que antes. Falta solo poner GOOGLE_API_KEY y GOOGLE_PLACE_ID en Railway. Ver sección 18.
+- 2026-09-09 — Se le pusieron topes duros a las reseñas para que no pueda haber cobro: guardado de 12 h, máximo 4 consultas al día y espera de 1 h si Google falla. Probado con 10 visitas seguidas: 3 consultas con el tope en 3, y 1 sola consulta cuando Google devuelve error. Falta igual limitar la cuota en Google Cloud, que es el freno definitivo.
+- 2026-09-09 — Tope diario de consultas a Google bajado de 10 a 4 a pedido del usuario. Verificado: con 10 visitas seguidas se llamó 4 veces y las 10 vieron las reseñas igual.

@@ -20,8 +20,123 @@ console.log(
   `(${(htmlGzip.length / 1048576).toFixed(1)} MB comprimida)`
 );
 
-const server = http.createServer((req, res) => {
+
+// ---------------------------------------------------------------
+// Reseñas de Google Maps
+// ---------------------------------------------------------------
+// La clave vive SOLO aquí, en las variables del servidor. Nunca en la
+// página: si estuviera ahí, cualquiera podría copiarla y gastar el saldo.
+const LLAVE_GOOGLE = process.env.GOOGLE_API_KEY || '';
+const LUGAR_GOOGLE = process.env.GOOGLE_PLACE_ID || '';
+
+// ---- Topes para que nunca pueda llegar un cobro ----
+// Las respuestas se guardan medio día, así que da igual si entran 10
+// visitas o 10.000: a Google se le pregunta como mucho 2 veces al día.
+const HORAS_GUARDADAS = Number(process.env.GOOGLE_HORAS_CACHE || 12);
+// Tope duro por día. Aunque algo falle o alguien recargue mil veces,
+// el servidor NO va a llamar a Google más de esto.
+// Con el guardado de 12 h bastan 2 al día, así que 4 deja margen de sobra.
+const MAX_POR_DIA = Number(process.env.GOOGLE_MAX_DIA || 4);
+// Si Google contesta con error, se espera una hora antes de reintentar.
+// Sin esto, un error dejaría al servidor llamando en cada visita.
+const ESPERA_TRAS_ERROR = 60 * 60 * 1000;
+
+let cacheResenas = null;
+let cacheHora = 0;
+let llamadasHoy = 0;
+let diaContado = '';
+let esperarHasta = 0;
+
+function hoy() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function respuestaGuardada(motivo) {
+  if (cacheResenas) return cacheResenas;
+  return { ok: false, motivo: motivo, resenas: [] };
+}
+
+async function traerResenas() {
+  const ahora = Date.now();
+
+  // 1. Si lo guardado sigue fresco, ni se consulta
+  if (cacheResenas && ahora - cacheHora < HORAS_GUARDADAS * 60 * 60 * 1000) {
+    return cacheResenas;
+  }
+
+  // 2. Sin configurar no se llama a nadie: cuesta cero
+  if (!LLAVE_GOOGLE || !LUGAR_GOOGLE) {
+    return { ok: false, motivo: 'Faltan GOOGLE_API_KEY y/o GOOGLE_PLACE_ID en las variables del servidor.', resenas: [] };
+  }
+
+  // 3. Si Google falló hace poco, se espera
+  if (ahora < esperarHasta) {
+    return respuestaGuardada('Google falló hace poco; se reintenta más tarde.');
+  }
+
+  // 4. Contador diario
+  if (diaContado !== hoy()) { diaContado = hoy(); llamadasHoy = 0; }
+  if (llamadasHoy >= MAX_POR_DIA) {
+    console.log('Tope diario alcanzado (' + MAX_POR_DIA + '): no se consulta a Google.');
+    return respuestaGuardada('Tope diario de consultas alcanzado.');
+  }
+
+  try {
+    llamadasHoy++;
+    const direccion = 'https://places.googleapis.com/v1/places/' +
+      encodeURIComponent(LUGAR_GOOGLE) + '?languageCode=es';
+    const r = await fetch(direccion, {
+      headers: {
+        'X-Goog-Api-Key': LLAVE_GOOGLE,
+        'X-Goog-FieldMask': 'displayName,rating,userRatingCount,googleMapsUri,reviews'
+      }
+    });
+
+    if (!r.ok) {
+      const cuerpo = await r.text();
+      console.error('Google respondió ' + r.status + ': ' + cuerpo.slice(0, 300));
+      esperarHasta = Date.now() + ESPERA_TRAS_ERROR;
+      return respuestaGuardada('Google respondió ' + r.status + '.');
+    }
+
+    const d = await r.json();
+    const resenas = (d.reviews || []).map((x) => ({
+      autor: (x.authorAttribution && x.authorAttribution.displayName) || 'Cliente',
+      foto: (x.authorAttribution && x.authorAttribution.photoUri) || '',
+      estrellas: x.rating || 0,
+      cuando: x.relativePublishTimeDescription || '',
+      texto: (x.text && x.text.text) || (x.originalText && x.originalText.text) || ''
+    })).filter((x) => x.texto);
+
+    cacheResenas = {
+      ok: true,
+      nota: d.rating || null,
+      total: d.userRatingCount || null,
+      enlace: d.googleMapsUri || '',
+      resenas: resenas
+    };
+    cacheHora = Date.now();
+    console.log('Reseñas actualizadas: ' + resenas.length +
+      ' (consulta ' + llamadasHoy + ' de ' + MAX_POR_DIA + ' hoy)');
+    return cacheResenas;
+  } catch (e) {
+    console.error('No se pudo consultar a Google: ' + e.message);
+    esperarHasta = Date.now() + ESPERA_TRAS_ERROR;
+    return respuestaGuardada('No se pudo consultar a Google.');
+  }
+}
+
+const server = http.createServer(async (req, res) => {
   const url = (req.url || '/').split('?')[0];
+
+  if (url === '/api/resenas') {
+    const datos = await traerResenas();
+    res.writeHead(200, {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': 'public, max-age=1800'
+    });
+    return res.end(JSON.stringify(datos));
+  }
 
   if (url === '/health') {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
