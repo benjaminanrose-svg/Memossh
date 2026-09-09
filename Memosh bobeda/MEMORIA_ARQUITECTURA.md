@@ -2,9 +2,32 @@
 
 Mapa de direcciones del proyecto **Memossh Coffee**. Se consulta ANTES de buscar archivos y se actualiza al terminar cualquier tarea que cree, modifique o elimine algo.
 
-- Actualizado: 2026-09-07
+- Actualizado: 2026-09-09
 - Raíz del repo: `C:\Users\noteb\Documents\GitHub\Memossh`
 - Rama: `main`
+
+---
+
+## 0. REGLA CERO: ahorrar tokens. Lee esto antes que nada.
+
+Esta bóveda **es la memoria del proyecto**, no un adorno. Se lee antes de tocar nada y se escribe en ella todo lo que se averigüe. Volver a investigar el proyecto cuesta carísimo; anotarlo aquí no cuesta nada.
+
+**Lo que nunca hay que hacer**
+
+- Abrir el HTML completo. Pesa **26 MB** y casi todo es base64. La página real es **solo la línea 390**.
+- Volver a averiguar algo que ya está escrito en este archivo. Si está aquí, se da por sabido.
+- Reescribir un archivo entero para cambiar una parte.
+
+**Lo que sí**
+
+| En vez de | Hacer |
+|---|---|
+| Leer el HTML | `sed -n '390p'` y buscar dentro de esa línea |
+| Imprimir contenido para revisar | Medir y devolver un JSON corto |
+| Escribir un script nuevo | Reusar los del scratchpad y los de aquí |
+| Llamadas sueltas | Agrupar las que no dependen entre sí |
+
+**Y lo más importante**: cuando algo cueste varias pruebas descubrirlo (un límite, una trampa, por qué algo no funcionó), **se anota aquí en el momento**. Eso es justamente lo que evita repetir el gasto la próxima vez.
 
 ---
 
@@ -499,6 +522,65 @@ Las estampas **se agregan desde JavaScript**, no están en el HTML. Si eso falla
 
 ---
 
+## 16. Los tres pasos del proceso
+
+En la sección "Del productor a tu taza, sin atajos", cada paso tiene su dibujo animado y **solo el paso que el cliente está mirando queda nítido**; los otros dos se apagan y se desenfocan apenas.
+
+### Los tres dibujos
+
+Son SVG de trazo, dibujados con `var(--color-accent)` para que combinen con los círculos numerados. Miden 44 px y van al lado del número, en una fila (`.paso-cabecera`).
+
+| Paso | Dibujo | Qué hace |
+|---|---|---|
+| 1. Elegimos el lote | Tres granos | El del medio se levanta e inclina, y un anillo punteado lo marca |
+| 2. Tostamos bajo pedido | Tambor de tueste | El tambor gira despacio y suben dos hilos de humo |
+| 3. Enviamos fresco | Bolsa con líneas de velocidad | La bolsa avanza y las líneas se estiran |
+
+Las animaciones **solo corren en el paso activo** (`animation-play-state`), así no hay tres cosas moviéndose a la vez.
+
+### Cómo decide cuál está activo
+
+Depende de cómo estén puestos los pasos:
+
+- **En fila (escritorio)**: los tres están a la misma altura, así que el scroll no sirve para distinguirlos. Se van encendiendo solos, uno cada 2,3 segundos, **solo mientras la sección está a la vista**. Cuando se va de pantalla, el ciclo se detiene.
+- **Apilados (celular)**: manda el que esté más cerca de la línea de lectura (45 % de la altura de pantalla). Sigue el dedo.
+
+El cambio de layout se detecta comparando la altura del primer y el tercer paso; no hay un ancho fijo escrito a mano.
+
+### Dos trampas que costaron encontrar
+
+1. **El apagado no se puede hacer con CSS aquí.** La regla `.paso:not(.activo) { opacity: .4 }` no ganaba la cascada dentro de este bundle, aunque el selector coincidía y no había ningún `!important` compitiendo. La solución fue que `pintar()` escriba `opacity`, `filter` y `transform` **directo en el elemento**. Determinista y sin sorpresas.
+
+2. **`requestAnimationFrame` no sirve como único motor.** El chequeo periódico llamaba a `pedir()`, que agenda un cuadro de animación; si el navegador no está dibujando (pestaña oculta), ese cuadro nunca llega y el paso marcado se queda viejo. Ahora el `setInterval` llama a `revisar()` **directo**, sin pasar por `requestAnimationFrame`. Cuesta tres mediciones cada 400 ms: nada.
+
+> **Nota para futuras pruebas en el navegador de la sesión**: cuando el panel está oculto, el navegador congela `requestAnimationFrame`, frena los `setInterval` y deja las transiciones detenidas en el tiempo 0. Eso hace que `getComputedStyle` devuelva el valor **inicial** en vez del final, y que los ciclos por temporizador no avancen. **No es un fallo del sitio.** Para verificar de verdad hay que mirar el estilo inline y las clases, o conseguir una captura con el panel visible.
+
+### Dónde está
+
+| Pieza | Selector |
+|---|---|
+| Cada paso | `.paso` (y `.activo` en el que está encendido) |
+| Número + dibujo | `.paso-cabecera` |
+| El dibujo | `.paso-icono`, con `.mueve` en las partes animadas |
+| Animaciones | `pr-elegir`, `pr-anillo`, `pr-girar`, `pr-humo`, `pr-avanza`, `pr-lineas` |
+| Lógica | método `pasosProceso()`, llamado desde `componentDidMount()` |
+
+Con movimiento reducido se apaga todo: los tres quedan nítidos y quietos.
+
+---
+
+## 17. Dos arreglos de acabado
+
+### La costura entre la sección oscura y el panel rojo
+
+El `#contacto` tenía `padding-top: 0`, así que el panel rojo **arrancaba pegado** al bloque oscuro de arriba: se veía una línea dura y las esquinas redondeadas chocaban con el borde. Ahora tiene `padding-top: clamp(52px, 7vw, 90px)` y el panel flota sobre el crema. Medido: pasó de **0 px a 90 px** de separación.
+
+### El corte de las dos columnas de Instagram
+
+Estaba en 960 px y a 1000 px de ancho la columna de texto quedaba en **190 px**: un hilo. El corte subió a **1180 px**, que es donde el texto tiene al menos 310 px. Medido: a 1000 px queda en una columna (texto de 512 px) y a 1280 px en dos columnas (372 + 540).
+
+---
+
 ## Historial
 
 - 2026-09-07 — Creado el mapa. No se modificó la página; solo se analizó.
@@ -517,3 +599,5 @@ Las estampas **se agregan desde JavaScript**, no están en el HTML. Si eso falla
 - 2026-09-07 — La sección de contacto pasó a ser la invitación a seguir en Instagram (rótulo, título, texto de novedades y el botón de Instagram como principal), en una sola columna centrada. La ventana creció de 380 a 540 px, que es el máximo real del feed: más ancho deja vacío. El alto se calcula solo para las 6 publicaciones. Los videos no pueden reproducirse solos: son contenido de otro sitio dentro de un iframe.
 - 2026-09-07 — La sección de Instagram pasó a dos columnas sobre 960 px (mensaje a la izquierda, feed de 540 px a la derecha) porque centrada dejaba la tarjeta flotando en medio del panel rojo y se veía pegada encima. El feed además quedó montado sobre el crema con margen y esquinas redondeadas. Bajo 960 px sigue apilado y centrado.
 - 2026-09-08 — Estampas de la marca: los 6 stickers se recortaron de una lámina JPEG usando el navegador (Node no lee JPEG), se les quitó el papel con la luminancia como transparencia, y se incrustaron como `data:` (227 KB). Van una por sección en 6 secciones claras, en la esquina inferior en escritorio y centradas al cierre en celular. 0 choques con el contenido en 1280 px y 375 px. Ver sección 15. Los PNG quedaron guardados en la bóveda por si hay que reusarlos.
+- 2026-09-08 — Los tres pasos del proceso: cada uno con su dibujo animado (granos, tambor de tueste, bolsa en camino) y solo el paso mirado queda nítido; los otros se apagan y desenfocan. En escritorio se encienden solos cada 2,3 s mientras la sección está a la vista; en celular siguen el scroll. Ver sección 16.
+- 2026-09-08 — Acabado: se separó el panel rojo del bloque oscuro (de 0 a 90 px, se veía una costura dura) y el corte de las dos columnas de Instagram subió de 960 a 1180 px, donde el texto dejaba de ser un hilo de 190 px. Ver sección 17.
