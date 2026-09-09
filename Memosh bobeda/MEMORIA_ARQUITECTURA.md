@@ -524,26 +524,33 @@ Las estampas **se agregan desde JavaScript**, no están en el HTML. Si eso falla
 
 ## 16. Los tres pasos del proceso: la pista de tueste
 
-**Rehecho el 2026-09-09.** La primera versión tenía un dibujo animado por paso y desenfocaba los pasos inactivos. El usuario dijo que **el desenfoque le daba sensación de suciedad**, y pidió en cambio un grano que avance por una línea del paso 1 al 3 tostándose en el camino.
+**Rehecho dos veces.** Primero era un dibujo animado por paso con los pasos inactivos desenfocados: el usuario dijo que **el desenfoque daba sensación de suciedad**. Después fue un solo grano viajero automático. Ahora son **cinco granos** y **el avance lo manda el mouse**.
 
 ### Qué se ve
 
-- Una **línea une los tres números**. Detrás del grano se va pintando de rojo, como una barra de avance.
-- **Un grano recorre la línea** del paso 1 al 3 y **cambia de color mientras viaja**: verde `#9fb894` → tostado medio `#8a5a34` → tostado oscuro `#3b2a20`. El navegador mezcla los colores intermedios, así que el tueste se ve gradual, no a saltos.
-- El paso activo queda encendido; los otros **solo se apagan a 0.45 de opacidad**. Sin desenfoque.
-- **En computador la línea es horizontal; en celular, vertical.** Se detecta comparando la altura del primer y el tercer número, no con un ancho fijo.
+- Una **línea une los tres números** y detrás del avance se pinta de rojo.
+- **Cinco granos sobre la línea**: uno en cada paso y uno entre medio. Van de verde a muy tostado: `#9fb894`, `#d8c07a`, `#b5793f`, `#7a4a2a`, `#3b2a20` (los colores de la lámina que mandó el usuario).
+- Los granos ya alcanzados quedan **llenos y con sombra**; los que faltan quedan al 28 % de opacidad. Se ve el tueste avanzar grano a grano.
+- El paso activo se enciende; los otros **solo se apagan a 0.45**. Nunca hay desenfoque.
+
+### Qué manda el avance
+
+| Dónde | Qué lo controla |
+|---|---|
+| Computador (línea horizontal) | **La posición del mouse** dentro de la sección. Nada automático. |
+| Celular (línea vertical) | El scroll: manda el paso más cercano a la línea de lectura. |
+
+El modo se detecta comparando la altura del primer y el tercer número, no con un ancho fijo.
 
 ### Detalles que costaron encontrar
 
-- **El círculo del número mide 52 px, no 34.** Por eso el grano quedaba tapado o rozando. La separación entre la línea y el grano es de **54 px**: radio del círculo (26) + medio grano (20) + aire.
-- **El grano no cuelga de la línea, cuelga de la reja.** La línea tiene `z-index: 0` para quedar debajo de los números; si el grano fuera hijo suyo, quedaría debajo también. Va suelto en la reja con `z-index: 3`.
-- El grano **flota al lado de la línea**, no encima: arriba si es horizontal, al costado si es vertical. Verificado que no pisa el número, ni el título, ni el texto, en 1280 px y 375 px.
+- **El círculo del número mide 52 px**, no 34. Los granos van a **54 px** de la línea: radio del círculo (26) + medio grano (19) + aire.
+- **Los granos cuelgan de la reja, no de la línea.** La línea tiene `z-index: 0` para quedar debajo de los números; un hijo suyo quedaría debajo también. Van sueltos con `z-index: 3`.
+- **En celular los dos granos de en medio se ocultan.** La línea vertical pasa por el costado de los números, pero entre paso y paso está el texto: un grano ahí caería encima. En vertical solo se muestran los tres de las estaciones.
 
 ### Sobre el PNG de granos del usuario
 
-El usuario mandó una lámina con 6 granos pintados (verde, amarillo, tostado claro, medio, oscuro y negro) para usarla como el grano viajero. **Ese archivo nunca se guardó en el computador**: solo estaba en el chat, y para incrustarlo hace falta el archivo en disco.
-
-Mientras tanto el grano es un **SVG dibujado en el estilo de trazo del sitio**, con los colores tomados de esa lámina. Para cambiarlo por el PNG real: guardar la imagen, recortar los 6 granos con `scratchpad/servidor-stickers.js` (pero conservando el color, no pasándolo a tinta negra) e ir cambiando la imagen en vez del `fill`.
+El usuario mandó una lámina con 6 granos pintados. **Ese archivo nunca se guardó en el computador**: solo estaba en el chat, y para incrustarlo hace falta el archivo en disco. Mientras tanto los granos son **SVG dibujados en el estilo de trazo del sitio**, con los colores tomados de esa lámina.
 
 ### Dónde está
 
@@ -551,10 +558,8 @@ Mientras tanto el grano es un **SVG dibujado en el estilo de trazo del sitio**, 
 |---|---|
 | Cada paso | `.paso` (y `.activo` en el encendido) |
 | La línea | `.pista`, con `.pista-riel` y `.pista-avance` |
-| El grano | `.grano-viajero`, su relleno es `.grano-cuerpo` con `var(--tueste)` |
+| Los granos | `.grano-linea` (y `.tostado` cuando ya pasó), relleno `.grano-cuerpo` con `var(--tueste)` |
 | Lógica | método `pasosProceso()`, llamado desde `componentDidMount()` |
-
-Con movimiento reducido se apaga todo el viaje y los tres pasos quedan visibles y quietos.
 
 ---
 
@@ -591,3 +596,4 @@ Estaba en 960 px y a 1000 px de ancho la columna de texto quedaba en **190 px**:
 - 2026-09-08 — Los tres pasos del proceso: cada uno con su dibujo animado (granos, tambor de tueste, bolsa en camino) y solo el paso mirado queda nítido; los otros se apagan y desenfocan. En escritorio se encienden solos cada 2,3 s mientras la sección está a la vista; en celular siguen el scroll. Ver sección 16.
 - 2026-09-08 — Acabado: se separó el panel rojo del bloque oscuro (de 0 a 90 px, se veía una costura dura) y el corte de las dos columnas de Instagram subió de 960 a 1180 px, donde el texto dejaba de ser un hilo de 190 px. Ver sección 17.
 - 2026-09-09 — La sección del proceso se rehízo: fuera el desenfoque (ensuciaba) y en su lugar un grano que recorre una línea del paso 1 al 3 tostándose de verde a oscuro. Horizontal en computador, vertical en celular. El PNG de granos del usuario no estaba guardado en disco, así que el grano es un SVG con los colores de esa lámina. Ver sección 16.
+- 2026-09-09 — La pista de tueste pasó a cinco granos (uno por paso y uno entre medio) que se tuestan de verde a oscuro, y en computador el avance lo manda la posición del mouse en vez de ir automático. En celular sigue el scroll y los dos granos de en medio se ocultan para no caer sobre el texto. Ver sección 16.
