@@ -11,10 +11,14 @@
             "id": "f7bec428ea66431a",
             "type": "leaf",
             "state": {
-              "type": "graph",
-              "state": {},
-              "icon": "lucide-git-fork",
-              "title": "Vista gráfica"
+              "type": "markdown",
+              "state": {
+                "file": "MEMORIA_ARQUITECTURA.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "MEMORIA_ARQUITECTURA"
             }
           }
         ]
@@ -186,6 +190,21 @@
   },
   "active": "f7bec428ea66431a",
   "lastOpenFiles": [
+    "MEMORIA_ARQUITECTURA.md.tmp.1376.8dfc4f216f3b",
+    "MEMORIA_ARQUITECTURA.md.tmp.1376.f96117a16134",
+    "MEMORIA_ARQUITECTURA.md.tmp.1376.1137607f1de1",
+    "MEMORIA_ARQUITECTURA.md.tmp.1376.b45561642adc",
+    "MEMORIA_ARQUITECTURA.md.tmp.1376.d35559e8abca",
+    "MEMORIA_ARQUITECTURA.md.tmp.1376.16afc541c57f",
+    "valle-amazonas.jpg",
+    "MEMORIA_ARQUITECTURA.md.tmp.1376.0f326ec7bcb9",
+    "MEMORIA_ARQUITECTURA.md.tmp.1376.d4709600e4b5",
+    "brasil-robusta.jpg",
+    "MEMORIA_ARQUITECTURA.md.tmp.1376.897242393e26",
+    "MEMORIA_ARQUITECTURA.md.tmp.1376.b6a0ac977a1d",
+    "MEMORIA_ARQUITECTURA.md.tmp.1376.3dc6bc5de8ad",
+    "salvador-atardecer.jpg",
+    "salvador-montana.jpg",
     "tmp.md",
     "sticker-5.png",
     "sticker-4.png",
@@ -194,18 +213,8 @@
     "sticker-1.png",
     "sticker-0.png",
     "MEMORIA_ARQUITECTURA.md",
-    "sedhkWRNR",
     "tmp1.md",
     "cree un enlace.md",
-    "Bienvenido.md",
-    "sedsZUA87",
-    "sedcQDU4o",
-    "sedapdkvk",
-    "sedWj866n",
-    "sedaXpu3j",
-    "sedkBdUcy",
-    "sedA0xB9G",
-    "sed8K38rM",
-    "sedykNglb"
+    "Bienvenido.md"
   ]
 }
