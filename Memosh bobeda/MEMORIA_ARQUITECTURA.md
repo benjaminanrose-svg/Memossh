@@ -29,6 +29,49 @@ Esta bóveda **es la memoria del proyecto**, no un adorno. Se lee antes de tocar
 
 **Y lo más importante**: cuando algo cueste varias pruebas descubrirlo (un límite, una trampa, por qué algo no funcionó), **se anota aquí en el momento**. Eso es justamente lo que evita repetir el gasto la próxima vez.
 
+### Direcciones rápidas (leer esto y NO buscar)
+
+Para leer esta bóveda sin gastar: `Grep "^## "` da el índice con números de línea; después `Read` con `offset`/`limit` **solo** de la sección que haga falta. Nunca el archivo entero.
+
+| Qué | Dónde |
+|---|---|
+| Página real (HTML, CSS y lógica) | Línea **390** del HTML, en texto JSON. Todo lo demás es base64 |
+| Interruptores (`whatsapp`, `mostrarTestimonios`, `mostrarGaleria`) | `data-props` del `<script type="text/x-dc">`. **Ojo**: el valor real sale del `default` de ahí; cambiar solo el `?? true` del código no alcanza (§19) |
+| Métodos de la lógica | `menuResponsivo` (§8) · `carritoCompras` (§10) · `microInteracciones` (§12) · `carruselCafes` (§13) · `ventanaInstagram` (§14) · `estampas` (§15) · `pasosProceso` (§16) · `resenasGoogle` (§18) |
+| Ocultar sin borrar | Clase `.oculto-temporal` (§9 y §19) |
+| Servidor | `server.js`: `PORT`, `/health`, `/api/resenas` y `traerResenas()` (§7 y §18) |
+| Vista previa | `preview_start` con nombre `start`, puerto 3000. **El servidor guarda la página en memoria al arrancar**: tras cada cambio hay que pararlo y arrancarlo de nuevo, si no se ve la versión vieja |
+| Panel del navegador oculto | Congela animaciones y transiciones: medir con JS, no fiarse de capturas |
+
+### Herramientas (el scratchpad se borra entre sesiones; aquí quedan)
+
+**Buscar en la página** sin abrirla: dice cuántas veces aparece cada texto y muestra un trocito alrededor.
+
+```js
+// node buscar.js "texto1" "texto2"   (LARGO=200 para ver más contexto)
+const fs = require('fs');
+const p = JSON.parse(fs.readFileSync('C:/Users/noteb/Documents/GitHub/Memossh/Memossh Coffee - pagina completa.html', 'utf8').split('\n')[389]);
+const L = Number(process.env.LARGO || 50);
+for (const a of process.argv.slice(2)) {
+  let i = -1, n = 0; const m = [];
+  while ((i = p.indexOf(a, i + 1)) !== -1) { n++; if (m.length < 12) m.push(i + ': ' + p.slice(Math.max(0, i - L), i + a.length + L).replace(/\s+/g, ' ')); }
+  console.log('== "' + a + '" x' + n); m.forEach((x) => console.log('  ' + x));
+}
+```
+
+**Editar la línea 390** sin romperla: se trabaja sobre el texto crudo, escapando igual que el original.
+
+```js
+const BS = String.fromCharCode(92);
+const tpl = (h) => h.split('"').join(BS + '"').split('</').join('<' + BS + 'u002F').split('\n').join(BS + 'n');
+function unico(de, a) {            // aborta si no hay exactamente 1 coincidencia
+  if (t.split(de).length - 1 !== 1) throw new Error('no unico');
+  t = t.replace(de, () => a);      // SIEMPRE con función: un texto con $' rompe todo
+}
+```
+
+Antes de guardar: misma cantidad de líneas, `JSON.parse` de la línea 390 sin error, comentarios CSS balanceados y ninguna clave (`AIza`) en la línea 390. Siempre un respaldo antes.
+
 ---
 
 ## 1. Archivos del repo
