@@ -44,7 +44,8 @@ Para leer esta bóveda sin gastar: `Grep "^## "` da el índice con números de l
 | Ocultar sin borrar | Clase `.oculto-temporal` (§9 y §19) |
 | Servidor | `server.js`: `PORT`, `/health`, `/api/resenas` y `traerResenas()` (§7 y §18) |
 | Vista previa | `preview_start` con nombre `start`, puerto 3000. **El servidor guarda la página en memoria al arrancar**: tras cada cambio hay que pararlo y arrancarlo de nuevo, si no se ve la versión vieja |
-| Panel del navegador oculto | Congela animaciones y transiciones: medir con JS, no fiarse de capturas |
+| Panel del navegador oculto | Congela animaciones y transiciones: medir con JS, no fiarse de capturas. **Aun visible, con tamaño de celular emulado da ~3 cuadros por segundo**: la fluidez real solo se ve en un teléfono |
+| Animaciones que van "a tirones" | Revisar primero que todo `pedir()` libere su marca dentro del cuadro (§16, "Fluidez") |
 
 ### Herramientas (el scratchpad se borra entre sesiones; aquí quedan)
 
@@ -671,6 +672,18 @@ El recorrido largo con aire entre pasos dejó **huecos vacíos** y el usuario pi
 
 Medido en 375 × 812: la escena se queda a 156 px del borde durante 1.380 px de scroll y el anillo, el color y los pasos avanzan con él. Visto con capturas al 18 % (paso 1), 55 % (paso 2, grano caramelo) y 93 % (paso 3, grano oscuro). Script: `proceso-escena.js`.
 
+### Fluidez: el error de fondo (2026-09-11)
+
+El usuario dijo que la escena **avanzaba a tirones**. La causa venía de antes de la escena:
+
+- `pedir()` hacía `if (!pedido) { pedido = true; requestAnimationFrame(revisar); }`, pero **nadie volvía a poner `pedido = false`**. Después del primer scroll ya no se pedían cuadros, y todo quedaba en manos del `setInterval(revisar, 400)`: **2,5 actualizaciones por segundo**.
+- Ese `setInterval` se había agregado creyendo que el panel del navegador congelaba los cuadros. **Era este error.** Sigue como red de seguridad, pero no es lo que mueve la animación.
+- Arreglo: `requestAnimationFrame(() => { pedido = false; revisar(); })`.
+- Además, **inercia suave** en la escena fija: `porFijo()` calcula el `objetivo` y `suavizar()` acerca `avanceP` un 20 % por cuadro hasta llegar. Se quitaron las transiciones del anillo, del giro del grano y de la línea de la escala: con actualizaciones por cuadro, una transición se reinicia a cada rato y se nota a saltos.
+- **Regla general para cualquier `pedir()` con `requestAnimationFrame`: liberar la marca DENTRO del cuadro.** El de `microInteracciones` (`alRodar`) y el del carrusel sí lo hacen.
+
+Probado: en 6 bajadas seguidas la página pidió cuadros nuevos en todas, no solo en la primera. **No se pudo medir aquí la fluidez real**: el panel emulado da ~3 cuadros por segundo aunque esté visible. Hay que mirarlo en un celular. Script: `proceso-fluido.js`.
+
 ### Sobre el PNG de granos del usuario
 
 El usuario mandó una lámina con 6 granos pintados. **Ese archivo nunca se guardó en el computador**: solo estaba en el chat, y para incrustarlo hace falta el archivo en disco. (Desde 2026-09-11 se sabe que las imágenes del chat quedan en el registro `.jsonl` de la sesión: ver "Herramientas" en la sección 0. Esa lámina se podría recuperar de ahí, buscándola por tamaño, porque no es la última imagen.) Mientras tanto los granos son **SVG dibujados en el estilo de trazo del sitio**, con los colores tomados de esa lámina.
@@ -868,3 +881,4 @@ Probado con capturas (celular): portada sin barra, con logo y texto en crema; me
 - 2026-09-11 — Proceso en celular: recorrido largo y continuo (aire entre pasos, la línea sigue la lectura, los 5 granos visibles, texto a la derecha de la línea). Medido: de 0 a 100 % en ~1.080 px, parejo. Fotos de las tarjetas: lavado suave y la del centro o bajo el mouse a color completo (secciones 13 y 16).
 - 2026-09-11 — Proceso en celular: escena fija (grano grande que se tuesta en un anillo de avance, escala de 5 granos, un paso a la vez). Reemplaza al recorrido con huecos, que queda como respaldo. Bloque destacado: El Salvador en vez del Nicaragua, con la foto de la cordillera. Ambos vistos con capturas en 375 × 812 (secciones 3 y 16).
 - 2026-09-11 — La estampa de "Cómo trabajamos" quedaba debajo del paso 3 al final de la escena fija. Ahora, con la escena activa, va en el relleno inferior de la sección, centrada: 34 px de aire, sin choque. Visto con captura en 375 × 812 (sección 16).
+- 2026-09-11 — Escena del proceso fluida: se corrigió un error viejo en `pedir()` (la marca nunca se liberaba y la animación solo se actualizaba cada 400 ms) y se agregó inercia suave. Se quitaron transiciones que peleaban con las actualizaciones por cuadro (sección 16, "Fluidez"). La fluidez real no se pudo medir en el panel: falta verla en un celular.
